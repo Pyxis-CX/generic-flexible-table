@@ -1,0 +1,123 @@
+/**
+ * Design tokens de DataTable.
+ *
+ * Todos los tokens viven bajo el prefijo `--dt-`. Hay tres niveles de override,
+ * de menor a mayor prioridad:
+ *
+ *   1. Estos defaults (`:root`)  → cambio global de la app
+ *   2. `[data-dt-theme="dark"]`  → tema explícito por subárbol
+ *   3. prop `theme={{ ... }}`    → inline vars, solo esa instancia de tabla
+ */
+
+:root {
+  /* --- tipografía --- */
+  --dt-font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  --dt-font-size: 0.875rem;
+  --dt-font-size-sm: 0.75rem;
+  --dt-header-font-size: 0.75rem;
+  --dt-header-font-weight: 600;
+  --dt-header-letter-spacing: 0.02em;
+
+  /* --- geometría --- */
+  --dt-radius: 14px;
+  --dt-radius-sm: 8px;
+  --dt-row-height: 44px;
+  --dt-header-height: 44px;
+  --dt-filter-row-height: 42px;
+  --dt-cell-padding-x: 14px;
+  --dt-border-width: 1px;
+  --dt-control-height: 32px;
+
+  /* --- color: light --- */
+  --dt-color-bg: #ffffff;
+  --dt-color-surface: #ffffff;
+  --dt-color-surface-alt: #f7f8fa;
+  --dt-color-header-bg: #f7f8fa;
+  --dt-color-text: #14161a;
+  --dt-color-text-muted: #6b7280;
+  --dt-color-border: #e6e8ec;
+  --dt-color-border-strong: #d3d7de;
+  --dt-color-accent: #4f46e5;
+  --dt-color-accent-soft: #eef2ff;
+  --dt-color-accent-contrast: #ffffff;
+  --dt-color-row-hover: #f4f6fb;
+  --dt-color-row-selected: #eef2ff;
+  --dt-color-row-stripe: #fafbfc;
+  --dt-color-danger: #dc2626;
+  --dt-color-scrollbar: #c9ccd4;
+
+  /* --- efectos --- */
+  --dt-shadow-pin: 6px 0 8px -6px rgb(15 23 42 / 22%);
+  --dt-shadow-pin-right: -6px 0 8px -6px rgb(15 23 42 / 22%);
+  --dt-shadow-popover: 0 12px 32px -8px rgb(15 23 42 / 22%), 0 2px 6px rgb(15 23 42 / 8%);
+  --dt-focus-ring: 0 0 0 2px var(--dt-color-bg), 0 0 0 4px var(--dt-color-accent);
+  --dt-transition: 140ms cubic-bezier(0.2, 0, 0, 1);
+  --dt-z-header: 30;
+  --dt-z-pinned: 20;
+  --dt-z-pinned-header: 40;
+  --dt-z-popover: 60;
+}
+
+/* Tema oscuro automático */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-dt-theme="light"]) {
+    --dt-color-bg: #101216;
+    --dt-color-surface: #16181d;
+    --dt-color-surface-alt: #1c1f26;
+    --dt-color-header-bg: #1c1f26;
+    --dt-color-text: #e9ebef;
+    --dt-color-text-muted: #99a0ad;
+    --dt-color-border: #262a33;
+    --dt-color-border-strong: #343a45;
+    --dt-color-accent: #818cf8;
+    --dt-color-accent-soft: #1e1b4b;
+    --dt-color-accent-contrast: #0b0d11;
+    --dt-color-row-hover: #1b1e25;
+    --dt-color-row-selected: #1e1b4b;
+    --dt-color-row-stripe: #14171c;
+    --dt-color-danger: #f87171;
+    --dt-color-scrollbar: #3a404b;
+    --dt-shadow-pin: 6px 0 10px -6px rgb(0 0 0 / 70%);
+    --dt-shadow-pin-right: -6px 0 10px -6px rgb(0 0 0 / 70%);
+    --dt-shadow-popover: 0 12px 32px -8px rgb(0 0 0 / 60%), 0 2px 6px rgb(0 0 0 / 40%);
+  }
+}
+
+/* Tema oscuro explícito (gana sobre prefers-color-scheme) */
+[data-dt-theme="dark"] {
+  --dt-color-bg: #101216;
+  --dt-color-surface: #16181d;
+  --dt-color-surface-alt: #1c1f26;
+  --dt-color-header-bg: #1c1f26;
+  --dt-color-text: #e9ebef;
+  --dt-color-text-muted: #99a0ad;
+  --dt-color-border: #262a33;
+  --dt-color-border-strong: #343a45;
+  --dt-color-accent: #818cf8;
+  --dt-color-accent-soft: #1e1b4b;
+  --dt-color-accent-contrast: #0b0d11;
+  --dt-color-row-hover: #1b1e25;
+  --dt-color-row-selected: #1e1b4b;
+  --dt-color-row-stripe: #14171c;
+  --dt-color-danger: #f87171;
+  --dt-color-scrollbar: #3a404b;
+  --dt-shadow-pin: 6px 0 10px -6px rgb(0 0 0 / 70%);
+  --dt-shadow-pin-right: -6px 0 10px -6px rgb(0 0 0 / 70%);
+  --dt-shadow-popover: 0 12px 32px -8px rgb(0 0 0 / 60%), 0 2px 6px rgb(0 0 0 / 40%);
+}
+
+/* Densidades: solo cambian métricas, nunca color */
+[data-dt-density="compact"] {
+  --dt-row-height: 34px;
+  --dt-header-height: 36px;
+  --dt-filter-row-height: 36px;
+  --dt-cell-padding-x: 10px;
+  --dt-font-size: 0.8125rem;
+}
+
+[data-dt-density="comfortable"] {
+  --dt-row-height: 58px;
+  --dt-header-height: 52px;
+  --dt-filter-row-height: 48px;
+  --dt-cell-padding-x: 18px;
+}

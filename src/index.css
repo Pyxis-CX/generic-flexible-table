@@ -1,0 +1,27 @@
+@import './components/DataTable/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--dt-font-family);
+  color: var(--dt-color-text);
+  background: var(--dt-color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
