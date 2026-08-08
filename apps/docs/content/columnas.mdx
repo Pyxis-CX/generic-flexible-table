@@ -1,0 +1,64 @@
+---
+title: Columnas
+---
+
+# Columnas
+
+`ColumnDef<T>` es la unidad de configuración. Solo `id` y `header` son
+obligatorios.
+
+```ts
+const columns: ColumnDef<Employee>[] = [
+  {
+    id: 'salary',                    // único y estable: orden, ancho, pin y persistencia cuelgan de él
+    header: 'Salario',
+    subHeader: 'Bruto anual',        // segunda línea bajo el título
+    headerTooltip: 'Antes de impuestos',
+    accessorKey: 'salary',           // clave tipada de T…
+    // accessorFn: (row) => row.comp.base + row.comp.bonus,  // …o función
+
+    width: 150, minWidth: 90, maxWidth: 400,
+    align: 'right',
+    pin: 'right',                    // 'left' | 'right'
+
+    sortable: true, resizable: true, reorderable: true, hideable: true,
+    hidden: false,                   // oculta por defecto (recuperable desde el panel)
+
+    filter: { kind: 'number', defaultOperator: 'gte' },
+
+    formatValue: (v) => euros.format(Number(v)),   // celda por defecto + CSV/PDF
+    renderCell: ({ value, row, rowIndex }) => <Money value={value} />,
+    renderHeader: ({ column, sortDir, sortIndex }) => <MiCabecera … />,
+
+    sortFn: (a, b) => a.salary - b.salary,          // comparador custom (client)
+    filterFn: (row, rule) => …,                     // predicado custom (client)
+
+    exportable: true,
+    exportHeader: 'Salario bruto',   // cabecera en texto plano para CSV/PDF
+
+    cellClassName: ({ value }) => (Number(value) < 0 ? 'negativo' : undefined),
+    cellStyle: { fontVariantNumeric: 'tabular-nums' },
+
+    meta: { loQueQuieras: true },    // bolsa libre para tu app
+  },
+]
+```
+
+## Interacciones de columna
+
+| Interacción | Cómo |
+|---|---|
+| Reordenar | Arrastra la cabecera (indicador de inserción antes/después) · `Ctrl/⌘ + ←/→` con la cabecera enfocada · botones ↑/↓ o arrastre en el panel Columnas |
+| Redimensionar | Arrastra el borde derecho. Doble clic restaura el ancho original |
+| Fijar | Menú ⋮ de la cabecera → izquierda/derecha. Sticky con sombra de borde |
+| Ocultar | Menú ⋮ → Ocultar, o panel Columnas (mostrar/ocultar todas) |
+
+Todo lo anterior persiste en `localStorage` bajo `tableId` (versionado con
+`persistVersion`: súbelo al cambiar el esquema de columnas y el estado guardado
+obsoleto se descarta).
+
+## Columnas estructurales
+
+Se añaden solas cuando activas la feature: checkbox de selección
+(`enableRowSelection`), expansor (`renderExpanded`) y acciones de fila
+(`renderRowActions`). Participan del pinning como una columna más.

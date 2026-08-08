@@ -1,0 +1,85 @@
+{
+  "name": "@list-dragable/datatable",
+  "version": "0.0.0",
+  "description": "Tabla React 100 % configurable: multi-orden numerado, filtros por columna, columnas fijadas y redimensionables, virtualización, export CSV/PDF y theming por design tokens. ESM, compatible con Next.js App Router.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./export": {
+      "types": "./dist/export.d.ts",
+      "default": "./dist/export.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown && node scripts/assemble-css.mjs && publint",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "jspdf": {
+      "optional": true
+    },
+    "jspdf-autotable": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tsdown/css": "^0.22.14",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/browser-playwright": "^4.1.10",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "playwright": "^1.62.1",
+    "publint": "^0.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tsdown": "^0.22.14",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.10",
+    "vitest-browser-react": "^2.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CAMBIAME/list-dragable.git"
+  },
+  "keywords": [
+    "react",
+    "table",
+    "datatable",
+    "datagrid",
+    "sorting",
+    "filtering",
+    "virtualization",
+    "css-modules"
+  ]
+}

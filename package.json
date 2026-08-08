@@ -1,27 +1,31 @@
 {
-  "name": "list-dragable",
+  "name": "list-dragable-monorepo",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.18.0"
   },
-  "dependencies": {
-    "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.8",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+  "scripts": {
+    "build": "pnpm -r --filter './packages/*' build",
+    "build:all": "pnpm -r build",
+    "dev": "pnpm --filter playground dev",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "test": "pnpm --filter @list-dragable/datatable test",
+    "lint": "oxlint",
+    "typecheck": "pnpm -r typecheck",
+    "release": "pnpm build && changeset publish",
+    "changeset": "changeset"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
-    "oxlint": "^1.75.0",
-    "typescript": "~6.0.2",
-    "vite": "^8.2.0"
+    "@changesets/cli": "^2.29.0",
+    "oxlint": "^1.75.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "nextra>zod": "4.1.13",
+      "nextra-theme-docs>zod": "4.1.13"
+    }
   }
 }

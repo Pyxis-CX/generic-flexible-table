@@ -1,0 +1,127 @@
+---
+title: Estilos y theming
+---
+
+# Estilos y theming
+
+Los estilos son **opt-in** (un import) y **overrideables en 6 niveles**, del
+más global al más quirúrgico. Todo el CSS de la biblioteca vive en
+`@layer datatable`: **cualquier regla tuya sin layer gana en especificidad**,
+sin `!important`, siempre.
+
+```tsx
+import '@list-dragable/datatable/styles.css'
+```
+
+## Nivel 1 — Design tokens (`--dt-*`)
+
+~40 variables CSS controlan color, métricas, tipografía, sombras y radios.
+Cinco líneas rebrandan toda la tabla:
+
+```css
+:root {
+  --dt-color-accent: #059669;
+  --dt-color-accent-soft: #d1fae5;
+  --dt-radius: 8px;
+  --dt-font-family: 'Inter', sans-serif;
+  --dt-row-height: 40px;
+}
+```
+
+Dark mode: automático con `prefers-color-scheme`, o explícito por subárbol con
+`[data-dt-theme="dark"]` / `[data-dt-theme="light"]`.
+
+## Nivel 2 — `theme` por instancia (tipado)
+
+```tsx
+<DataTable
+  theme={{ colorAccent: '#e11d48', radius: '20px', borderWidth: '2px' }}
+/>
+```
+
+Cada clave camelCase se inyecta como `--dt-kebab-case` solo en esa instancia.
+`ThemeTokens` te da autocompletado de todos los tokens.
+
+## Nivel 3 — Clases estables `dt-*`
+
+Las clases compiladas no llevan hash: `dt-root`, `dt-headerCell`, `dt-row`,
+`dt-cellInner`, `dt-toolbar`, `dt-sortChip`, `dt-footer`… Son **API pública
+semver** (un test de CI falla si desaparece una). Override directo:
+
+```css
+/* tu hoja global — sin layer, gana siempre */
+.dt-headerCell {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dt-row[data-selected='true'] {
+  outline: 2px solid var(--dt-color-accent);
+}
+```
+
+Los estados van en `data-*`: `data-selected`, `data-stripe`, `data-dragging`,
+`data-drop`, `data-align`, `data-clickable`, `data-dt-density`.
+
+## Nivel 4 — `classNames` por parte + tus CSS Modules
+
+La biblioteca se estiliza con CSS Modules y nesting nativo; tus overrides
+pueden usar exactamente lo mismo:
+
+```css
+/* MiTabla.module.css */
+.fila {
+  &[data-selected='true'] {
+    background: color-mix(in srgb, var(--dt-color-accent) 12%, transparent);
+  }
+
+  &:hover {
+    box-shadow: inset 3px 0 0 var(--dt-color-accent);
+  }
+}
+```
+
+```tsx
+import styles from './MiTabla.module.css'
+
+<DataTable
+  classNames={{
+    row: styles.fila,
+    // root, toolbar, scroller, table, thead, headerRow, headerCell,
+    // filterRow, filterCell, tbody, cell, footer
+  }}
+/>
+```
+
+## Nivel 5 — Slots y render props
+
+```tsx
+<DataTable
+  slots={{
+    empty: <MiEstadoVacio />,
+    error: (err, retry) => <MiError error={err} onRetry={retry} />,
+    pagination: (ctx) => <MiPaginador {...ctx} />,
+    sortIndicator: (dir, index) => <MiFlecha dir={dir} n={index} />,
+  }}
+/>
+```
+
+Y por columna: `renderCell`, `renderHeader`, `filter.render`,
+`cellClassName`/`cellStyle` (estáticos o función del valor).
+
+## Nivel 6 — Unstyled + composición
+
+No importes `styles.css` y no hay una sola regla nuestra en tu página. Monta
+las parts a mano y estiliza desde cero — ver [Composición](/composicion).
+
+## Densidades custom
+
+`compact / normal / comfortable` son presets de tokens. Define la tuya:
+
+```css
+[data-dt-density='micro'] {
+  --dt-row-height: 26px;
+  --dt-cell-padding-x: 6px;
+  --dt-font-size: 0.72rem;
+}
+```

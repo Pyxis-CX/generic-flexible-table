@@ -1,0 +1,54 @@
+# Publicación con npm Trusted Publishing (OIDC) — SIN NPM_TOKEN.
+#
+# Setup una única vez:
+#   1. Primer publish manual: cd packages/datatable && pnpm build && npm publish --access public
+#   2. npmjs.com → paquete → Settings → Trusted Publisher → GitHub Actions:
+#      { repo: <owner>/list-dragable, workflow: release.yml }
+#      (el filename "release.yml" queda FIJADO: si renombras este fichero, actualiza la config)
+#   3. Nada más. El npm CLI detecta el entorno OIDC de Actions, acuña una
+#      credencial efímera y genera la provenance automáticamente.
+#
+# Flujo: merge a main con changesets pendientes → este workflow abre/actualiza
+# el PR "Version Packages" → al mergear ESE PR, este mismo workflow publica.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest # runner de GitHub obligatorio para OIDC
+    permissions:
+      contents: write # commit de versiones + GitHub Release
+      pull-requests: write # PR "Version Packages"
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # npm >= 11.5.1 (requerido para OIDC)
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Crear PR de versiones o publicar
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # OJO: sin NPM_TOKEN ni NODE_AUTH_TOKEN — un placeholder colgando
+          # en .npmrc rompe el intercambio OIDC antes de empezar.

@@ -1,0 +1,73 @@
+---
+title: Filtros
+---
+
+# Filtros
+
+Cada columna declara su filtro en `filter: { kind, … }`. La fila de filtros
+aparece bajo la cabecera solo si alguna columna tiene filtro. Todos con
+debounce de 300 ms y combinados con **AND**.
+
+| `kind` | Control | Operadores |
+|---|---|---|
+| `text` | Input con selector de operador | `contains` · `equals` · `startsWith` · `endsWith` · `notContains` |
+| `number` | Input numérico o rango | `equals` · `gte` · `lte` · `gt` · `lt` · `between` |
+| `date` | Dos date pickers | `dateBetween` (el día final entra completo) |
+| `select` | Popover multi-selección | `in` |
+| `boolean` | Select Sí/No/Todos | `equals` |
+| `none` | Sin filtro (celda vacía) | — |
+
+```ts
+{ id: 'name', …, filter: { kind: 'text', placeholder: 'Nombre…' } }
+{ id: 'salary', …, filter: { kind: 'number', defaultOperator: 'gte', operators: ['gte', 'lte', 'between'] } }
+{ id: 'status', …, filter: { kind: 'select', options: [{ value: 'active', label: 'Activo' }] } }
+```
+
+## Facetas de los select
+
+Sin `options`, el modo client las **deriva de los datos** (valores únicos,
+ordenados). En modo server las entrega tu adapter:
+
+```ts
+createServerDataSource({ fetch, facets: { status: […], country: […] } })
+```
+
+## Normalización
+
+Los operadores de texto ignoran mayúsculas y acentos (`NFD` sin diacríticos):
+buscar `lopez` encuentra `López`. En modo client, con índice cacheado — la
+normalización se paga una vez por dataset, no por pulsación.
+
+## Filtro 100 % custom
+
+Dos escotillas, por separado o juntas:
+
+```tsx
+{
+  id: 'tags',
+  header: 'Etiquetas',
+  // tu control (recibe la regla actual y setRule)
+  filter: {
+    kind: 'text',
+    render: ({ rule, setRule }) => (
+      <TagPicker
+        value={(rule?.value as string[]) ?? []}
+        onChange={(tags) =>
+          setRule(tags.length ? { id: 'tags', operator: 'in', value: tags } : undefined)
+        }
+      />
+    ),
+  },
+  // tu predicado (modo client)
+  filterFn: (row, rule) => (rule.value as string[]).every((t) => row.tags.includes(t)),
+}
+```
+
+En modo server la regla te llega tal cual en `QueryState.filters` — tu backend
+decide qué significa.
+
+## Búsqueda global
+
+`enableGlobalSearch` (por defecto activa) cruza todas las columnas con
+accessor. En server llega como `globalSearch` en el query. Las reglas vacías
+(`''`, `[]`, `['','']`) se descartan solas — nunca las verás en el adapter.

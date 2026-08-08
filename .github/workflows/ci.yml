@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm --filter @list-dragable/datatable typecheck
+
+      - name: Build biblioteca (tsdown + publint)
+        run: pnpm --filter @list-dragable/datatable build
+
+      - name: Tests unit + types
+        run: pnpm --filter @list-dragable/datatable exec vitest run --project unit
+
+      - name: Instalar Chromium para browser tests
+        run: pnpm --filter @list-dragable/datatable exec playwright install --with-deps chromium
+
+      - name: Tests de navegador (Chromium real)
+        run: pnpm --filter @list-dragable/datatable exec vitest run --project browser
+
+      - name: Contrato de estilos (clases dt- estables)
+        run: |
+          cd packages/datatable
+          # Las clases dt-* son API pública: si desaparece una, es breaking change.
+          for cls in dt-root dt-headerCell dt-row dt-cellInner dt-toolbar dt-footer dt-sortChip dt-filterCell; do
+            grep -q "\.$cls" dist/styles.css || { echo "FALTA clase pública: $cls"; exit 1; }
+          done
+          grep -q "@layer datatable" dist/styles.css || { echo "FALTA @layer datatable"; exit 1; }
+
+      - name: Build playground (consume el paquete real)
+        run: pnpm --filter playground build
+
+      - name: Changesets presentes en PRs con cambios de la biblioteca
+        if: github.event_name == 'pull_request'
+        run: pnpm changeset status --since origin/main || echo "::warning::PR sin changeset — añade uno con 'pnpm changeset' si toca la biblioteca"

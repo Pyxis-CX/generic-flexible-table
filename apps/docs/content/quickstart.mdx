@@ -1,0 +1,91 @@
+---
+title: Empezar
+---
+
+# Quickstart
+
+```bash
+pnpm add @list-dragable/datatable
+# solo si vas a exportar PDF:
+pnpm add jspdf jspdf-autotable
+```
+
+## Uso mínimo (Vite, CRA, cualquier SPA)
+
+```tsx
+import { DataTable, type ColumnDef } from '@list-dragable/datatable'
+import '@list-dragable/datatable/styles.css'
+
+interface User {
+  id: string
+  name: string
+  age: number
+}
+
+const columns: ColumnDef<User>[] = [
+  { id: 'name', header: 'Nombre', accessorKey: 'name', filter: { kind: 'text' } },
+  { id: 'age', header: 'Edad', accessorKey: 'age', align: 'right', filter: { kind: 'number' } },
+]
+
+export function Usuarios({ users }: { users: User[] }) {
+  return (
+    <DataTable<User>
+      tableId="usuarios"          // clave de persistencia en localStorage
+      columns={columns}
+      rows={users}                // modo client: todo en memoria
+      getRowId={(row) => row.id}
+    />
+  )
+}
+```
+
+> **Regla de oro**: `columns`, `rows`, `getRowId` y cualquier render prop deben
+> tener **identidad estable** (módulo, `useMemo`, `useCallback`). Las filas los
+> reciben por contexto: si cambian en cada render del padre, todas las filas se
+> re-renderizan. Ver [Performance](/performance).
+
+## Next.js App Router
+
+La tabla es un Client Component (lleva `"use client"` en cada módulo — no
+necesitas envoltorios). El adapter puede vivir en el servidor:
+
+```tsx
+// app/layout.tsx — el CSS se importa una vez
+import '@list-dragable/datatable/styles.css'
+```
+
+```tsx
+// app/usuarios/page.tsx — Server Component
+import { UsersTable } from './users-table'
+
+export default async function Page() {
+  const initial = await fetchUsersPage({ page: 1, pageSize: 25 })
+  return <UsersTable initial={initial} />
+}
+```
+
+```tsx
+// app/usuarios/users-table.tsx — Client Component
+'use client'
+import { useMemo } from 'react'
+import { DataTable } from '@list-dragable/datatable'
+// /server NO lleva "use client": el mismo helper sirve aquí y en un route handler
+import { createServerDataSource, queryToSearchParams } from '@list-dragable/datatable/server'
+
+export function UsersTable() {
+  const source = useMemo(
+    () =>
+      createServerDataSource<User>({
+        fetch: async (query, signal) => {
+          const res = await fetch(`/api/users?${queryToSearchParams(query)}`, { signal })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json() // { rows, total }
+        },
+      }),
+    [],
+  )
+  return <DataTable dataSource={source} columns={columns} getRowId={(r) => r.id} />
+}
+```
+
+El flujo completo del adapter está en [Modelo de datos](/modelo-datos).

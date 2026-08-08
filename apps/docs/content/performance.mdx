@@ -1,0 +1,84 @@
+---
+title: Performance
+---
+
+# Performance
+
+La regla que gobierna el diseño: **no meter en React state lo que cambia a
+60 fps, no recalcular lo que no cambió, no re-renderizar a quien no le afecta.**
+
+## Estado en tres niveles
+
+```mermaid
+flowchart TB
+    subgraph N0["Nivel 0 — Transitorio (60 fps)"]
+        R["Resize de columna"] -->|"setProperty(--dt-w-id)"| CSS["CSS vars en el raíz"]
+        CSS -->|"calc() en colgroup,<br/>sticky y min-width"| BROWSER["El navegador recoloca.<br/>0 renders, 0 mutaciones"]
+    end
+    subgraph N1["Nivel 1 — Confirmado"]
+        CSS -->|"1 commit en pointerup"| STORE["Store: reducer + acciones tipadas"]
+        STORE -->|"selector por componente"| ROW["1 fila re-renderiza,<br/>no 750 celdas"]
+    end
+    subgraph N2["Nivel 2 — Derivado (modo client)"]
+        STORE --> IDX["índice de búsqueda<br/>(1 vez por dataset, lazy)"]
+        IDX --> FIL["filterRows<br/>(si cambian filtros)"]
+        FIL --> SORT["sortRows<br/>(si cambia el orden)"]
+        SORT --> SLICE["slice<br/>(si cambia la página)"]
+    end
+```
+
+- **Nivel 0**: durante el arrastre del resize solo se escribe una CSS var.
+  `colgroup`, offsets sticky y `min-width` de la tabla son `calc(var(...))` —
+  el navegador rederiva, React ni se entera. Test de CI: 30 `pointermove` = 0
+  mutaciones en `tbody`.
+- **Nivel 1**: cada fila/celda/cabecera se suscribe por selector
+  (`useSyncExternalStore`). Marcar un checkbox toca **una** fila. `dispatch`
+  tiene identidad estable y viaja por contexto — no invalida `memo`.
+- **Nivel 2**: pipeline en capas memoizadas. Cambiar de página ejecuta SOLO el
+  slice; cambiar el orden no re-filtra.
+
+## Números (Node 24, mediana)
+
+| Operación | 50 000 filas | 200 000 filas |
+|---|---|---|
+| Ordenar (2 criterios) | 45 ms | 198 ms |
+| Búsqueda global (índice caliente) | 2,7 ms | 11 ms |
+| Filtrar (1 regla) | 26 ms | 91 ms |
+| Cambiar de página | ~0 ms | ~0 ms |
+
+El orden usa claves precalculadas (una lectura del accessor por fila, no dos
+por comparación; `Float64Array` para columnas numéricas). La búsqueda global
+cachea las cadenas normalizadas (`NFD` sin diacríticos) en un índice lazy.
+
+## Lo que te toca a ti
+
+La tabla no puede memoizar por ti lo que le pasas. **Identidades estables**:
+
+```tsx
+// ✅ módulo o useMemo/useCallback
+const columns = useMemo(() => [...], [])
+const getRowId = useCallback((r: Row) => r.id, [])
+const renderRowActions = useCallback((row: Row) => <Actions row={row} />, [])
+
+// ❌ inline: cada render del padre re-renderiza TODAS las filas
+<DataTable columns={[...]} getRowId={(r) => r.id} renderRowActions={(r) => ...} />
+```
+
+## Cuándo activar qué
+
+| Filas visibles por página | Recomendación |
+|---|---|
+| ≤ 100 | Nada especial |
+| 100 – 5 000 | `enableVirtualization` (pinta solo lo visible + overscan) |
+| Dataset client > 50 000 | Virtualización + considera pasar a modo server |
+| Dataset > 200 000 | Modo server casi siempre; el sort en memoria ya cuesta ~200 ms |
+
+La virtualización mide la altura real de la primera fila del DOM — sobrevive a
+cambios de densidad y de tipografía.
+
+## Benchmarks en CI
+
+`pnpm bench` corre el pipeline sobre 50 000 filas deterministas (PRNG con
+semilla). Compara PR contra main con `--outputJson`/`--compare`; para gates
+duros usa instrumentación (CodSpeed) — el wall-clock de runners compartidos
+tiene ±10 % de ruido.

@@ -1,0 +1,87 @@
+---
+title: Composición
+---
+
+# Composición
+
+`<DataTable>` es un preset. Debajo hay un store con selectores y parts que se
+suscriben solas — **sin prop drilling** — y esa API es pública: puedes montar
+tu propia tabla pieza a pieza, quitar lo que no quieras y meter lo tuyo.
+
+```mermaid
+flowchart TB
+    STORE["TableStore<br/>(reducer + suscripción por selector)"]
+    CFG["ConfigContext<br/>(columns, labels, flags, render props)"]
+    DATA["DataContext<br/>(pageRows, total, loading, facets)"]
+    STORE --- TB["Toolbar"]
+    STORE --- SB["SortBar"]
+    STORE --- HC["HeaderCell × n"]
+    STORE --- BR["BodyRow × n<br/>(cada una su selector)"]
+    STORE --- FT["Footer"]
+    CFG --- BR
+    DATA --- TB
+    DATA --- FT
+```
+
+## Hooks públicos
+
+```tsx
+import {
+  useTableSelector,   // suscríbete a CUALQUIER porción del estado
+  useTableDispatch,   // dispara acciones tipadas
+  useTableConfig,     // columnas, labels, flags
+  useTableData,       // filas de la página, total, loading, facets, export
+  useIsSelected,      // selección de UNA fila (selector optimizado)
+  useSortEntry,       // { dir, index, count } de UNA columna
+} from '@list-dragable/datatable'
+```
+
+## Ejemplo: toolbar propia
+
+Cualquier componente montado dentro de la tabla puede leer y despachar:
+
+```tsx
+function MiBarraDeAcciones() {
+  const dispatch = useTableDispatch()
+  const seleccionadas = useTableSelector((s) => s.ui.selection.size)
+  const filtrosActivos = useTableSelector((s) => s.committed.filters.length)
+
+  return (
+    <div className="mi-barra">
+      {seleccionadas > 0 && <button onClick={archivar}>Archivar {seleccionadas}</button>}
+      {filtrosActivos > 0 && (
+        <button onClick={() => dispatch({ type: 'sort/clear' })}>Limpiar orden</button>
+      )}
+      <input
+        placeholder="Buscar…"
+        onChange={(e) => dispatch({ type: 'search/set', value: e.target.value })}
+      />
+    </div>
+  )
+}
+```
+
+## Acciones disponibles
+
+El reducer expone ~25 acciones tipadas (`TableAction`): `sort/toggle`,
+`sort/set`, `sort/move`, `sort/clear`, `filter/set`, `search/set`, `page/set`,
+`pageSize/set`, `columns/reorder`, `columns/move`, `columns/pin`,
+`columns/toggle`, `columns/resize`, `density/set`, `selection/*`,
+`expanded/toggle`… Todas **serializables**: puedes loguearlas, reproducirlas o
+implementar undo.
+
+```tsx
+const dispatch = useTableDispatch()
+dispatch({ type: 'sort/set', id: 'salary', dir: 'desc', keepOthers: true })
+dispatch({ type: 'columns/pin', id: 'name', side: 'left' })
+```
+
+## Reglas del contrato
+
+1. Los hooks solo funcionan **dentro** del árbol de la tabla (los contextos los
+   provee `<DataTable>`).
+2. Un selector **no debe cerrar sobre datos de fuera del store** (el caché por
+   snapshot devolvería valores rancios). Suscríbete a la referencia
+   (`s.ui.selection`) y deriva en render.
+3. Los selectores devuelven valores comparados con `Object.is` (o tu `isEqual`
+   como segundo argumento) — devuelve primitivas o referencias estables.
