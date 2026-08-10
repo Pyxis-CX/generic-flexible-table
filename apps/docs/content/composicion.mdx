@@ -76,6 +76,36 @@ dispatch({ type: 'sort/set', id: 'salary', dir: 'desc', keepOthers: true })
 dispatch({ type: 'columns/pin', id: 'name', side: 'left' })
 ```
 
+## Modo controlado: el estado vive donde tú digas
+
+`TableState` es serializable. Pásalo por `state` y guárdalo donde quieras —
+URL, Zustand, Redux, un `useState` — la tabla lo refleja y emite cada cambio:
+
+```tsx
+import { buildTableState, type TableState } from '@list-dragable/datatable'
+
+function TablaConEstadoEnURL() {
+  const [params, setParams] = useSearchParams()
+  const state = useMemo<TableState>(
+    () => (params.get('t') ? JSON.parse(params.get('t')!) : buildTableState(columns)),
+    [params],
+  )
+  return (
+    <DataTable
+      columns={columns}
+      rows={rows}
+      getRowId={getRowId}
+      state={state}
+      onStateChange={(next) => setParams({ t: JSON.stringify(next) }, { replace: true })}
+    />
+  )
+}
+```
+
+Cambiar el estado **desde fuera** (un preset guardado, un botón externo) mueve
+la tabla; las interacciones del usuario fluyen hacia fuera por `onStateChange`.
+En modo controlado la persistencia en `localStorage` se desactiva — es tuya.
+
 ## Reglas del contrato
 
 1. Los hooks solo funcionan **dentro** del árbol de la tabla (los contextos los

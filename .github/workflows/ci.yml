@@ -47,6 +47,11 @@ jobs:
       - name: Tests de navegador (Chromium real)
         run: pnpm --filter @list-dragable/datatable exec vitest run --project browser
 
+      - name: Tests de navegador con React Compiler (la memoización puede ocultar bugs de deps)
+        run: pnpm --filter @list-dragable/datatable exec vitest run --project browser
+        env:
+          DT_COMPILER: '1'
+
       - name: Contrato de estilos (clases dt- estables)
         run: |
           cd packages/datatable

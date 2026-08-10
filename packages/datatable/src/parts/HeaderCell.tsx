@@ -65,7 +65,13 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
   /* ---------------- resize: CSS var en vivo, commit al soltar -------- */
 
   const [resizing, setResizing] = useState(false)
-  const resizeRef = useRef<{ startX: number; startWidth: number; width: number } | null>(null)
+  const resizeRef = useRef<{
+    startX: number
+    startWidth: number
+    width: number
+    /** +1 en LTR, -1 en RTL: arrastrar hacia el final inline siempre agranda. */
+    sign: 1 | -1
+  } | null>(null)
 
   const onResizeStart = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -75,7 +81,8 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
       ? parseFloat(getComputedStyle(rootRef.current).getPropertyValue(varName))
       : NaN
     const startWidth = Number.isFinite(current) ? current : (column.width ?? DEFAULT_WIDTH)
-    resizeRef.current = { startX: e.clientX, startWidth, width: startWidth }
+    const rtl = rootRef.current ? getComputedStyle(rootRef.current).direction === 'rtl' : false
+    resizeRef.current = { startX: e.clientX, startWidth, width: startWidth, sign: rtl ? -1 : 1 }
     setResizing(true)
   }
 
@@ -90,7 +97,7 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
     const onMove = (e: PointerEvent) => {
       const ref = resizeRef.current
       if (!ref) return
-      ref.width = clamp(ref.startWidth + (e.clientX - ref.startX), min, max)
+      ref.width = clamp(ref.startWidth + (e.clientX - ref.startX) * ref.sign, min, max)
       rootRef.current?.style.setProperty(varName, `${ref.width}px`)
     }
     const stop = () => {
@@ -135,7 +142,10 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     const rect = e.currentTarget.getBoundingClientRect()
-    const side = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after'
+    const rtl = getComputedStyle(e.currentTarget).direction === 'rtl'
+    const firstHalf = e.clientX < rect.left + rect.width / 2
+    // "before" es orden LÓGICO: en RTL la primera mitad visual es la posterior.
+    const side = firstHalf !== rtl ? 'before' : 'after'
     dispatch({ type: 'drag/over', target: { id: column.id, side } })
   }
 

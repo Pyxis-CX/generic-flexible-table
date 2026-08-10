@@ -76,6 +76,21 @@ const renderRowActions = useCallback((row: Row) => <Actions row={row} />, [])
 La virtualización mide la altura real de la primera fila del DOM — sobrevive a
 cambios de densidad y de tipografía.
 
+## React Compiler
+
+La biblioteca se publica **precompilada** con React Compiler (recomendación
+oficial de react.dev para bibliotecas: el compilador de tu app no procesa
+`node_modules`). El runtime es `react/compiler-runtime`, incluido en React 19 —
+cero dependencias extra. La CI ejecuta la suite de navegador con y sin
+compilador, porque la memoización automática puede enmascarar bugs de
+dependencias.
+
+## RTL
+
+Pinning, resize, drag & drop y toda la geometría usan propiedades lógicas
+(`inset-inline-*`) y signos conscientes de dirección: `dir="rtl"` funciona sin
+configuración.
+
 ## Benchmarks en CI
 
 `pnpm bench` corre el pipeline sobre 50 000 filas deterministas (PRNG con

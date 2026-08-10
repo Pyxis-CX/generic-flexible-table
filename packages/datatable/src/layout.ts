@@ -26,7 +26,7 @@ export interface LayoutCol<T> {
   widthExpr: string | null
   pin: PinSide | null
   isPinEdge: boolean
-  /** `left`/`right` ya calculados para sticky (suman `var()`s → viven en CSS). */
+  /** Offsets sticky ya calculados (inset-inline-*: RTL gratis; suman `var()`s). */
   stickyStyle: CSSProperties
 }
 
@@ -86,14 +86,14 @@ export function buildLayout<T>(input: BuildLayoutInput<T>): LayoutCol<T>[] {
   // posiciones sticky cuando cambia una var de ancho, sin re-render.
   const acc: string[] = []
   for (const item of left) {
-    item.stickyStyle = { left: acc.length ? `calc(${acc.join(' + ')})` : 0 }
+    item.stickyStyle = { insetInlineStart: acc.length ? `calc(${acc.join(' + ')})` : 0 }
     acc.push(item.widthExpr!)
   }
   if (left.length) left[left.length - 1].isPinEdge = true
 
   acc.length = 0
   for (let i = right.length - 1; i >= 0; i--) {
-    right[i].stickyStyle = { right: acc.length ? `calc(${acc.join(' + ')})` : 0 }
+    right[i].stickyStyle = { insetInlineEnd: acc.length ? `calc(${acc.join(' + ')})` : 0 }
     acc.push(right[i].widthExpr!)
   }
   if (right.length) right[0].isPinEdge = true

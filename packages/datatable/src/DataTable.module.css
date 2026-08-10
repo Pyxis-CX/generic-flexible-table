@@ -49,7 +49,7 @@
 
     & svg {
       position: absolute;
-      left: 9px;
+      inset-inline-start: 9px;
       color: var(--dt-color-text-muted);
       pointer-events: none;
     }
@@ -57,7 +57,8 @@
     & input {
       width: 100%;
       height: var(--dt-control-height);
-      padding: 0 28px 0 30px;
+      padding-block: 0;
+    padding-inline: 30px 28px;
       font: inherit;
       color: inherit;
       background: var(--dt-color-surface-alt);
@@ -78,7 +79,7 @@
 
     & .clear {
       position: absolute;
-      right: 6px;
+      inset-inline-end: 6px;
       display: grid;
       place-items: center;
       width: 18px;
@@ -405,7 +406,7 @@
       font: inherit;
       font-size: var(--dt-font-size-sm);
       color: inherit;
-      text-align: left;
+      text-align: start;
       cursor: pointer;
       background: none;
       border: 0;
@@ -471,7 +472,7 @@
       z-index: var(--dt-z-header);
       padding: 0;
       font-weight: var(--dt-header-font-weight);
-      text-align: left;
+      text-align: start;
       background: var(--dt-color-header-bg);
       border-bottom: var(--dt-border-width) solid var(--dt-color-border);
     }
@@ -645,7 +646,7 @@
   .resizer {
     position: absolute;
     top: 0;
-    right: -3px;
+    inset-inline-end: -3px;
     bottom: 0;
     z-index: 3;
     width: 7px;
@@ -656,7 +657,7 @@
       position: absolute;
       top: 20%;
       bottom: 20%;
-      left: 3px;
+      inset-inline-start: 3px;
       width: 1px;
       content: "";
       background: var(--dt-color-border-strong);
@@ -762,6 +763,15 @@
 
   .pinRightEdge {
     box-shadow: var(--dt-shadow-pin-right);
+  }
+
+  /* RTL: el borde inline-start queda a la derecha visual → sombras espejadas */
+  .root:dir(rtl) .pinLeftEdge {
+    box-shadow: var(--dt-shadow-pin-right);
+  }
+
+  .root:dir(rtl) .pinRightEdge {
+    box-shadow: var(--dt-shadow-pin);
   }
 
   /* ------------------------------------------------------------------ */

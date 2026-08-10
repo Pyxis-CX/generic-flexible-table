@@ -26,6 +26,8 @@ export type { TableStore, SortEntry } from './store'
 export { useTableConfig, useTableData } from './context'
 export type { TableConfig, TableData, TableFlags } from './context'
 export type { RuntimeState, TableAction, InteractionState } from './state'
+/** Construye un TableState inicial válido para el modo controlado. */
+export { buildTableState } from './state'
 
 export { DEFAULT_LABELS } from './utils'
 

@@ -138,6 +138,21 @@ describe('selección y expansión (estado de interacción)', () => {
   })
 })
 
+describe('state/replace (modo controlado)', () => {
+  it('reemplaza el confirmado sin tocar la interacción', () => {
+    let s = run(initial(), { type: 'selection/toggleRow', id: 'x' })
+    const next = { ...buildTableState(columns), page: 7 }
+    s = run(s, { type: 'state/replace', state: next })
+    expect(s.committed.page).toBe(7)
+    expect([...s.ui.selection]).toEqual(['x']) // la selección sobrevive
+  })
+
+  it('misma referencia es no-op', () => {
+    const s = initial()
+    expect(tableReducer(s, { type: 'state/replace', state: s.committed })).toBe(s)
+  })
+})
+
 describe('reconcileOrder', () => {
   it('conserva el orden guardado, añade columnas nuevas al final, elimina huérfanas', () => {
     expect(reconcileOrder(['c', 'a', 'zombi'], ['a', 'b', 'c'])).toEqual(['c', 'a', 'b'])

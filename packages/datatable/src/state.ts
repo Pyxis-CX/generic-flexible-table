@@ -26,6 +26,8 @@ export interface RuntimeState {
 
 export type TableAction =
   | { type: 'reset'; state: TableState }
+  /** Reemplaza el estado confirmado sin tocar la interacción (modo controlado). */
+  | { type: 'state/replace'; state: TableState }
   | { type: 'columns/reconcile'; ids: string[]; widths: Record<string, number>; pins: Record<string, PinSide | null> }
   | { type: 'columns/move'; id: string; delta: -1 | 1 }
   | { type: 'columns/reorder'; fromId: string; toId: string; side: 'before' | 'after' }
@@ -109,6 +111,9 @@ export function tableReducer(state: RuntimeState, action: TableAction): RuntimeS
   switch (action.type) {
     case 'reset':
       return { committed: action.state, ui: EMPTY_INTERACTION }
+
+    case 'state/replace':
+      return action.state === c ? state : { ...state, committed: action.state }
 
     case 'columns/reconcile': {
       const order = reconcileOrder(c.order, action.ids)

@@ -12,7 +12,12 @@ async function findCss(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) out.push(...(await findCss(full)))
-    else if (entry.name.endsWith('.css') && entry.name !== 'styles.css') out.push(full)
+    else if (
+      entry.name.endsWith('.css') &&
+      entry.name !== 'styles.css' &&
+      entry.name !== 'tokens.css' // copia propia de un build anterior, no re-ingerir
+    )
+      out.push(full)
   }
   return out
 }

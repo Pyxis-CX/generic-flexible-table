@@ -2,8 +2,18 @@ import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
+// DT_COMPILER=1 corre la suite contra el código COMPILADO con React Compiler
+// (la memoización puede enmascarar bugs de deps: CI ejecuta ambas patas).
+const withCompiler = process.env.DT_COMPILER === '1'
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(
+      withCompiler
+        ? { babel: { plugins: [['babel-plugin-react-compiler', { target: '19' }]] } }
+        : undefined,
+    ),
+  ],
   test: {
     globals: true,
     projects: [

@@ -72,6 +72,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     persist = true,
     persistVersion = 1,
     initialState,
+    state: controlledState,
     onStateChange,
 
     enableColumnReorder = true,
@@ -137,6 +138,8 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
 
   const buildInitial = useCallback((): TableState => {
     const base = buildTableState(columns, initialState)
+    // Modo controlado: el estado inicial es el del consumidor, sin persistencia.
+    if (controlledState) return controlledState
     const saved = readPersisted<Partial<TableState>>(storageKey, persistVersion)
     if (!saved) return base
     return {
@@ -180,15 +183,29 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columnIdsKey, store])
 
+  const isControlled = controlledState !== undefined
+
   useEffect(() => {
-    if (!storageKey) return
+    // En modo controlado la persistencia es responsabilidad del consumidor.
+    if (!storageKey || isControlled) return
     const { page: _page, globalSearch: _q, ...persisted } = committed
     writePersisted(storageKey, persistVersion, persisted)
-  }, [committed, storageKey, persistVersion])
+  }, [committed, storageKey, persistVersion, isControlled])
 
   useEffect(() => {
     onStateChange?.(committed)
   }, [committed, onStateChange])
+
+  // Modo controlado: prop → store, con guarda anti-eco. El ciclo es
+  // dispatch → onStateChange(next) → consumidor guarda → prop vuelve
+  // idéntica (misma identidad o mismo contenido) → no re-dispatch.
+  useEffect(() => {
+    if (!controlledState) return
+    const current = store.getState().committed
+    if (controlledState === current) return
+    if (JSON.stringify(controlledState) === JSON.stringify(current)) return
+    store.dispatch({ type: 'state/replace', state: controlledState })
+  }, [controlledState, store])
 
   // Selección controlada: prop → store (con guarda anti-eco).
   useEffect(() => {

@@ -290,6 +290,13 @@ export interface DataTableProps<T> {
   persistVersion?: number
 
   initialState?: Partial<TableState>
+  /**
+   * Modo controlado: la tabla refleja este estado y emite cada cambio por
+   * `onStateChange`. Guarda el objeto tal cual (es serializable) — en URL,
+   * Zustand, Redux o donde quieras — y devuélvelo por aquí. Si se omite,
+   * la tabla gestiona su estado internamente (con `initialState` como semilla).
+   */
+  state?: TableState
   onStateChange?: (state: TableState) => void
 
   /* features */
