@@ -50,7 +50,7 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
     switch (item.kind) {
       case 'select':
         return (
-          <td key={item.key} className={baseClass} style={item.stickyStyle}>
+          <td key={item.key} tabIndex={-1} className={baseClass} style={item.stickyStyle}>
             <div className={s.cellInner} data-align="center">
               <input
                 className={s.checkbox}
@@ -65,7 +65,7 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
         )
       case 'expander':
         return (
-          <td key={item.key} className={baseClass} style={item.stickyStyle}>
+          <td key={item.key} tabIndex={-1} className={baseClass} style={item.stickyStyle}>
             <div className={s.cellInner} data-align="center">
               <button
                 type="button"
@@ -90,7 +90,7 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
         )
       case 'actions':
         return (
-          <td key={item.key} className={baseClass} style={item.stickyStyle}>
+          <td key={item.key} tabIndex={-1} className={baseClass} style={item.stickyStyle}>
             <div className={s.cellInner} data-align="right">
               {renderRowActions?.(row, absoluteIndex)}
             </div>
@@ -111,6 +111,7 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
         return (
           <td
             key={item.key}
+            tabIndex={-1}
             className={cx(baseClass, extraClass)}
             style={extraStyle ? { ...item.stickyStyle, ...extraStyle } : item.stickyStyle}
           >
@@ -127,6 +128,7 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
     <>
       <tr
         data-row="1"
+        aria-rowindex={absoluteIndex + 2}
         data-stripe={absoluteIndex % 2 === 1 ? 'odd' : 'even'}
         data-selected={isSelected}
         data-clickable={Boolean(onRowClick)}

@@ -30,6 +30,8 @@ export type { RuntimeState, TableAction, InteractionState } from './state'
 export { buildTableState } from './state'
 
 export { DEFAULT_LABELS } from './utils'
+export { localStorageAdapter } from './persistence'
+export type { PersistenceAdapter, PersistedTableState } from './persistence'
 
 export type {
   Align,

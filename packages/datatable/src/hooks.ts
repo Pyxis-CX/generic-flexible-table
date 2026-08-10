@@ -22,46 +22,6 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 }
 
 /* ------------------------------------------------------------------ */
-/* Persistencia en localStorage                                        */
-/* ------------------------------------------------------------------ */
-
-interface Persisted<T> {
-  v: number
-  s: T
-}
-
-export function readPersisted<T>(key: string | null, version: number): T | null {
-  if (!key || typeof window === 'undefined') return null
-  try {
-    const raw = window.localStorage.getItem(key)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Persisted<T>
-    if (parsed.v !== version) return null
-    return parsed.s
-  } catch {
-    return null
-  }
-}
-
-export function writePersisted<T>(key: string | null, version: number, state: T): void {
-  if (!key || typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(key, JSON.stringify({ v: version, s: state } satisfies Persisted<T>))
-  } catch {
-    /* quota llena o modo privado: la tabla sigue funcionando sin persistir */
-  }
-}
-
-export function clearPersisted(key: string | null): void {
-  if (!key || typeof window === 'undefined') return
-  try {
-    window.localStorage.removeItem(key)
-  } catch {
-    /* noop */
-  }
-}
-
-/* ------------------------------------------------------------------ */
 /* Virtualización de filas (altura fija)                               */
 /* ------------------------------------------------------------------ */
 

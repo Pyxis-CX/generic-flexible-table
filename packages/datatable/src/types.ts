@@ -283,9 +283,11 @@ export interface DataTableProps<T> {
 
   getRowId: (row: T, index: number) => string
 
-  /** Necesario para persistir estado en localStorage. */
+  /** Necesario para persistir estado. */
   tableId?: string
   persist?: boolean
+  /** Dónde persistir. Por defecto, localStorage. Ver PersistenceAdapter. */
+  persistence?: import('./persistence').PersistenceAdapter
   /** Sube el número para invalidar estado persistido tras un cambio de esquema. */
   persistVersion?: number
 

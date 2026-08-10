@@ -106,6 +106,39 @@ Cambiar el estado **desde fuera** (un preset guardado, un botón externo) mueve
 la tabla; las interacciones del usuario fluyen hacia fuera por `onStateChange`.
 En modo controlado la persistencia en `localStorage` se desactiva — es tuya.
 
+## Persistencia inyectable
+
+Por defecto el estado va a `localStorage`. Implementa `PersistenceAdapter`
+para llevarlo a IndexedDB o a tu backend (vistas por usuario):
+
+```tsx
+import type { PersistenceAdapter } from '@list-dragable/datatable'
+
+const serverViews: PersistenceAdapter = {
+  read: async (key, version) => {
+    const res = await fetch(`/api/views/${key}?v=${version}`)
+    return res.ok ? res.json() : null
+  },
+  write: (key, version, state) =>
+    void fetch(`/api/views/${key}?v=${version}`, { method: 'PUT', body: JSON.stringify(state) }),
+  clear: (key) => void fetch(`/api/views/${key}`, { method: 'DELETE' }),
+}
+
+<DataTable tableId="pedidos" persistence={serverViews} … />
+```
+
+`read` puede ser síncrono o `Promise`: con un adapter asíncrono la tabla
+arranca con el estado por defecto y aplica el guardado al resolver — y **las
+escrituras quedan bloqueadas hasta entonces** para no pisar lo guardado.
+
+## Navegación de teclado
+
+El cuerpo es un ARIA grid con roving tabindex (un solo tabstop): `Tab` entra,
+`← → ↑ ↓` mueven la celda activa (conscientes de `dir`), `Home`/`End` primera y
+última de la fila, `Ctrl/⌘ + Home/End` extremos del cuerpo, `Enter`/`Espacio`
+accionan el control de la celda (checkbox, expansor, botón). Todo por
+delegación DOM: navegar no re-renderiza nada.
+
 ## Reglas del contrato
 
 1. Los hooks solo funcionan **dentro** del árbol de la tabla (los contextos los

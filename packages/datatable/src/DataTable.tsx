@@ -18,15 +18,10 @@ import { ConfigContext, DataContext } from './context'
 import type { TableConfig, TableData, TableFlags } from './context'
 import { fetchAllPaginated } from './dataSources'
 import { exportToCsv, exportToPdf } from './exporters'
-import {
-  clearPersisted,
-  readPersisted,
-  useDataSource,
-  useDebouncedValue,
-  useVirtualRows,
-  writePersisted,
-} from './hooks'
+import { useDataSource, useDebouncedValue, useVirtualRows } from './hooks'
+import { localStorageAdapter } from './persistence'
 import { IconAlert, IconInbox, IconRotate } from './icons'
+import { useGridKeyboardNav } from './gridNav'
 import { buildLayout, tableMinWidthExpr, widthVarOf } from './layout'
 import { BodyRow } from './parts/BodyRow'
 import { Footer } from './parts/Footer'
@@ -71,6 +66,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     tableId,
     persist = true,
     persistVersion = 1,
+    persistence = localStorageAdapter,
     initialState,
     state: controlledState,
     onStateChange,
@@ -140,7 +136,10 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     const base = buildTableState(columns, initialState)
     // Modo controlado: el estado inicial es el del consumidor, sin persistencia.
     if (controlledState) return controlledState
-    const saved = readPersisted<Partial<TableState>>(storageKey, persistVersion)
+    // Solo la vía síncrona en el primer render; los adapters async se aplican
+    // en el efecto de hidratación de abajo.
+    const maybe = storageKey ? persistence.read(storageKey, persistVersion) : null
+    const saved = maybe && !(maybe instanceof Promise) ? maybe : null
     if (!saved) return base
     return {
       ...base,
@@ -185,12 +184,44 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
 
   const isControlled = controlledState !== undefined
 
+  // Hidratación de adapters asíncronos (IndexedDB, backend): una sola vez.
+  // Hasta que resuelva, las escrituras quedan bloqueadas — si no, el estado
+  // por defecto del primer render PISARÍA lo guardado antes de leerlo.
+  const hydratedRef = useRef(false)
+  const hydrationDoneRef = useRef(false)
+  useEffect(() => {
+    if (!storageKey || isControlled || hydratedRef.current) return
+    hydratedRef.current = true
+    const result = persistence.read(storageKey, persistVersion)
+    if (!(result instanceof Promise)) {
+      hydrationDoneRef.current = true
+      return
+    }
+    void result.finally(() => {
+      hydrationDoneRef.current = true
+    }).then((saved) => {
+      if (!saved) return
+      const current = store.getState().committed
+      store.dispatch({
+        type: 'state/replace',
+        state: {
+          ...current,
+          ...saved,
+          order: reconcileOrder(saved.order ?? current.order, columns.map((c) => c.id)),
+          widths: { ...current.widths, ...saved.widths },
+          pins: { ...current.pins, ...saved.pins },
+        },
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey, isControlled, persistVersion, store])
+
   useEffect(() => {
     // En modo controlado la persistencia es responsabilidad del consumidor.
-    if (!storageKey || isControlled) return
+    if (!storageKey || isControlled || !hydrationDoneRef.current) return
     const { page: _page, globalSearch: _q, ...persisted } = committed
-    writePersisted(storageKey, persistVersion, persisted)
-  }, [committed, storageKey, persistVersion, isControlled])
+    void persistence.write(storageKey, persistVersion, persisted)
+  }, [committed, storageKey, persistVersion, isControlled, persistence])
 
   useEffect(() => {
     onStateChange?.(committed)
@@ -374,9 +405,9 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
   )
 
   const reset = useCallback(() => {
-    clearPersisted(storageKey)
+    if (storageKey) void persistence.clear(storageKey)
     store.dispatch({ type: 'reset', state: buildTableState(columns, initialState) })
-  }, [storageKey, store, columns, initialState])
+  }, [storageKey, store, columns, initialState, persistence])
 
   /* ---------------- layout (estable durante el resize) ---------------- */
 
@@ -437,6 +468,8 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     const measured = first?.getBoundingClientRect().height
     if (measured && Math.abs(measured - rowHeight) > 0.5) setRowHeight(measured)
   }, [committed.density, theme, pageRows.length, rowHeight])
+
+  useGridKeyboardNav(scrollerRef)
 
   const virtualEnabled =
     enableVirtualization && expandedCount === 0 && pageRows.length >= virtualizationThreshold
@@ -598,9 +631,11 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                 )}
 
                 <table
+                  role="grid"
                   className={cx(s.table, classNames?.table)}
                   style={{ width: '100%', minWidth }}
-                  aria-rowcount={total}
+                  aria-rowcount={total + 1}
+                  aria-colcount={layout.filter((l) => l.kind !== 'filler').length}
                 >
                   <colgroup>
                     {layout.map((item) => (
