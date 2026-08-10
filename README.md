@@ -20,6 +20,13 @@ pnpm changeset    # añade un changeset a tu PR
 ## Release
 
 Merge a `main` con changesets → el workflow abre el PR **Version Packages** →
-al mergearlo se publica a npm vía **trusted publishing OIDC** (sin tokens) con
-provenance. Ver [.github/workflows/release.yml](.github/workflows/release.yml)
-para el setup inicial (primer publish manual + configurar trusted publisher).
+al mergearlo se publica en **GitHub Packages** con el `GITHUB_TOKEN` del
+propio workflow (sin secrets manuales).
+
+Instalación para consumidores (GitHub Packages requiere auth):
+
+```ini
+# .npmrc
+@pyxis-cx:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```

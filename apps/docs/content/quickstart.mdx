@@ -4,6 +4,16 @@ title: Empezar
 
 # Quickstart
 
+El paquete se distribuye por **GitHub Packages**. Apunta el scope al registry
+en tu `.npmrc` (GitHub Packages exige autenticación incluso para paquetes
+públicos — usa un token clásico con `read:packages`):
+
+```ini
+# .npmrc
+@pyxis-cx:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
 ```bash
 pnpm add @pyxis-cx/generic-flexible-table
 # solo si vas a exportar PDF:
