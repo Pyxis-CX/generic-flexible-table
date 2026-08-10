@@ -36,13 +36,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build biblioteca (docs importan tipos y estilos)
-        run: pnpm --filter @list-dragable/datatable build
+        run: pnpm --filter @pyxis-cx/generic-flexible-table build
 
       - name: Build docs (export estático + índice pagefind)
         run: pnpm --filter docs build
         env:
           # GitHub Pages sirve bajo /<repo>/
-          NEXT_PUBLIC_BASE_PATH: /list-dragable
+          NEXT_PUBLIC_BASE_PATH: /generic-flexible-table
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,8 +1,8 @@
-# list-dragable — monorepo
+# generic-flexible-table — monorepo
 
 | Ruta | Qué es |
 |---|---|
-| [`packages/datatable`](packages/datatable) | **@list-dragable/datatable** — la biblioteca (React 19, ESM, tsdown) |
+| [`packages/datatable`](packages/datatable) | **@pyxis-cx/generic-flexible-table** — la biblioteca (React 19, ESM, tsdown) |
 | [`apps/playground`](apps/playground) | Demo Vite que consume el paquete construido |
 | [`apps/docs`](apps/docs) | Sitio de documentación (Nextra 4, export estático) |
 

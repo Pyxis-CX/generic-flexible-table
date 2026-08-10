@@ -21,7 +21,7 @@ importers:
 
   apps/docs:
     dependencies:
-      '@list-dragable/datatable':
+      '@pyxis-cx/generic-flexible-table':
         specifier: workspace:*
         version: link:../../packages/datatable
       next:
@@ -46,7 +46,7 @@ importers:
 
   apps/playground:
     dependencies:
-      '@list-dragable/datatable':
+      '@pyxis-cx/generic-flexible-table':
         specifier: workspace:*
         version: link:../../packages/datatable
       jspdf:

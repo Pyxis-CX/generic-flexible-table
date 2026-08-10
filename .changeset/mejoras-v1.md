@@ -1,5 +1,5 @@
 ---
-'@list-dragable/datatable': minor
+'@pyxis-cx/generic-flexible-table': minor
 ---
 
 Modo controlado (`state` + `onStateChange` + `buildTableState`), soporte RTL

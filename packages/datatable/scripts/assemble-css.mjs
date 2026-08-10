@@ -1,6 +1,6 @@
 // Ensambla dist/styles.css = tokens (sin hashear) + todos los .css que
 // emitió tsdown al compilar los CSS Modules. Un único import para el
-// consumidor: `import '@list-dragable/datatable/styles.css'`.
+// consumidor: `import '@pyxis-cx/generic-flexible-table/styles.css'`.
 import { readFile, readdir, writeFile, copyFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -26,7 +26,7 @@ const tokens = await readFile(join(SRC, 'tokens.css'), 'utf8')
 const emitted = await findCss(DIST)
 const parts = await Promise.all(emitted.map((f) => readFile(f, 'utf8')))
 
-const banner = `/* @list-dragable/datatable — estilos. Todo vive en @layer datatable:\n * cualquier regla tuya SIN layer gana en especificidad. Tokens: --dt-*. */\n`
+const banner = `/* @pyxis-cx/generic-flexible-table — estilos. Todo vive en @layer datatable:\n * cualquier regla tuya SIN layer gana en especificidad. Tokens: --dt-*. */\n`
 await writeFile(join(DIST, 'styles.css'), banner + tokens + '\n' + parts.join('\n'))
 
 // tokens.css también disponible por separado (tema sin estructura).

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { DataTable } from '@list-dragable/datatable'
-import { createServerDataSource } from '@list-dragable/datatable/server'
-import type { ThemeTokens } from '@list-dragable/datatable'
+import { DataTable } from '@pyxis-cx/generic-flexible-table'
+import { createServerDataSource } from '@pyxis-cx/generic-flexible-table/server'
+import type { ThemeTokens } from '@pyxis-cx/generic-flexible-table'
 import { employeeColumns } from './demo/columns'
 import { STATUS_LABELS, generateEmployees, type Employee } from './demo/data'
 import { createMockApi } from './demo/mockApi'

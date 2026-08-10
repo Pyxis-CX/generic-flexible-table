@@ -33,22 +33,22 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck
-        run: pnpm --filter @list-dragable/datatable typecheck
+        run: pnpm --filter @pyxis-cx/generic-flexible-table typecheck
 
       - name: Build biblioteca (tsdown + publint)
-        run: pnpm --filter @list-dragable/datatable build
+        run: pnpm --filter @pyxis-cx/generic-flexible-table build
 
       - name: Tests unit + types
-        run: pnpm --filter @list-dragable/datatable exec vitest run --project unit
+        run: pnpm --filter @pyxis-cx/generic-flexible-table exec vitest run --project unit
 
       - name: Instalar Chromium para browser tests
-        run: pnpm --filter @list-dragable/datatable exec playwright install --with-deps chromium
+        run: pnpm --filter @pyxis-cx/generic-flexible-table exec playwright install --with-deps chromium
 
       - name: Tests de navegador (Chromium real)
-        run: pnpm --filter @list-dragable/datatable exec vitest run --project browser
+        run: pnpm --filter @pyxis-cx/generic-flexible-table exec vitest run --project browser
 
       - name: Tests de navegador con React Compiler (la memoización puede ocultar bugs de deps)
-        run: pnpm --filter @list-dragable/datatable exec vitest run --project browser
+        run: pnpm --filter @pyxis-cx/generic-flexible-table exec vitest run --project browser
         env:
           DT_COMPILER: '1'
 

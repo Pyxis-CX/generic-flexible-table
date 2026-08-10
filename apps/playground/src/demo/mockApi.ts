@@ -1,5 +1,5 @@
-import type { ColumnDef, QueryResult, QueryState } from '@list-dragable/datatable'
-import { filterRows, sortRows } from '@list-dragable/datatable/server'
+import type { ColumnDef, QueryResult, QueryState } from '@pyxis-cx/generic-flexible-table'
+import { filterRows, sortRows } from '@pyxis-cx/generic-flexible-table/server'
 import type { Employee } from './data'
 
 /**

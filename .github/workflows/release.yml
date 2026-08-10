@@ -3,7 +3,7 @@
 # Setup una única vez:
 #   1. Primer publish manual: cd packages/datatable && pnpm build && npm publish --access public
 #   2. npmjs.com → paquete → Settings → Trusted Publisher → GitHub Actions:
-#      { repo: <owner>/list-dragable, workflow: release.yml }
+#      { repo: Pyxis-CX/generic-flexible-table, workflow: release.yml }
 #      (el filename "release.yml" queda FIJADO: si renombras este fichero, actualiza la config)
 #   3. Nada más. El npm CLI detecta el entorno OIDC de Actions, acuña una
 #      credencial efímera y genera la provenance automáticamente.

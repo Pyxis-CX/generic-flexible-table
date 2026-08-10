@@ -56,7 +56,7 @@ Pasa `dataSource`. El array `sorts` conserva el orden en que el usuario aplicó
 cada criterio: se traduce **posicionalmente** a tu `ORDER BY`.
 
 ```ts
-import { createServerDataSource, serializeSorts } from '@list-dragable/datatable/server'
+import { createServerDataSource, serializeSorts } from '@pyxis-cx/generic-flexible-table/server'
 
 const source = createServerDataSource<Order>({
   fetch: async (q, signal) => {
@@ -88,7 +88,7 @@ flowchart LR
 ```
 
 ```ts
-import { fetchAllPaginated } from '@list-dragable/datatable/server'
+import { fetchAllPaginated } from '@pyxis-cx/generic-flexible-table/server'
 
 const all = await fetchAllPaginated(source, { sorts, filters, globalSearch }, {
   chunkSize: 500,

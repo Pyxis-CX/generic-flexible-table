@@ -1,4 +1,4 @@
-import type { ColumnDef } from '@list-dragable/datatable'
+import type { ColumnDef } from '@pyxis-cx/generic-flexible-table'
 import d from './demo.module.css'
 import { STATUS_LABELS, type Employee } from './data'
 

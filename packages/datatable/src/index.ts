@@ -1,5 +1,5 @@
 // Entry de cliente: el componente, las parts componibles y los hooks del store.
-// Los estilos son opt-in: `import '@list-dragable/datatable/styles.css'`.
+// Los estilos son opt-in: `import '@pyxis-cx/generic-flexible-table/styles.css'`.
 
 export { DataTable } from './DataTable'
 

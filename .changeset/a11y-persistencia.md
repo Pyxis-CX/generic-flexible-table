@@ -1,5 +1,5 @@
 ---
-'@list-dragable/datatable': minor
+'@pyxis-cx/generic-flexible-table': minor
 ---
 
 Navegación de teclado ARIA grid (roving tabindex, flechas/Home/End dir-aware,

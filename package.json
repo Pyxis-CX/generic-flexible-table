@@ -12,7 +12,7 @@
     "dev": "pnpm --filter playground dev",
     "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm --filter docs build",
-    "test": "pnpm --filter @list-dragable/datatable test",
+    "test": "pnpm --filter @pyxis-cx/generic-flexible-table test",
     "lint": "oxlint",
     "typecheck": "pnpm -r typecheck",
     "release": "pnpm build && changeset publish",

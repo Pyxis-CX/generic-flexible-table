@@ -33,7 +33,7 @@ import {
   useTableData,       // filas de la página, total, loading, facets, export
   useIsSelected,      // selección de UNA fila (selector optimizado)
   useSortEntry,       // { dir, index, count } de UNA columna
-} from '@list-dragable/datatable'
+} from '@pyxis-cx/generic-flexible-table'
 ```
 
 ## Ejemplo: toolbar propia
@@ -82,7 +82,7 @@ dispatch({ type: 'columns/pin', id: 'name', side: 'left' })
 URL, Zustand, Redux, un `useState` — la tabla lo refleja y emite cada cambio:
 
 ```tsx
-import { buildTableState, type TableState } from '@list-dragable/datatable'
+import { buildTableState, type TableState } from '@pyxis-cx/generic-flexible-table'
 
 function TablaConEstadoEnURL() {
   const [params, setParams] = useSearchParams()
@@ -112,7 +112,7 @@ Por defecto el estado va a `localStorage`. Implementa `PersistenceAdapter`
 para llevarlo a IndexedDB o a tu backend (vistas por usuario):
 
 ```tsx
-import type { PersistenceAdapter } from '@list-dragable/datatable'
+import type { PersistenceAdapter } from '@pyxis-cx/generic-flexible-table'
 
 const serverViews: PersistenceAdapter = {
   read: async (key, version) => {

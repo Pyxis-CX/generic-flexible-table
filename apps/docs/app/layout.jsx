@@ -5,8 +5,8 @@ import 'nextra-theme-docs/style.css'
 
 export const metadata = {
   title: {
-    default: '@list-dragable/datatable',
-    template: '%s — @list-dragable/datatable',
+    default: '@pyxis-cx/generic-flexible-table',
+    template: '%s — @pyxis-cx/generic-flexible-table',
   },
   description:
     'Tabla React 100 % configurable: multi-orden numerado, filtros por columna, columnas fijadas, virtualización, export CSV/PDF y theming por design tokens.',
@@ -21,12 +21,12 @@ export default async function RootLayout({ children }) {
           navbar={
             <Navbar
               logo={<b>⌗ datatable</b>}
-              projectLink="https://github.com/CAMBIAME/list-dragable"
+              projectLink="https://github.com/Pyxis-CX/generic-flexible-table"
             />
           }
-          footer={<Footer>MIT — @list-dragable/datatable</Footer>}
+          footer={<Footer>MIT — @pyxis-cx/generic-flexible-table</Footer>}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/CAMBIAME/list-dragable/tree/main/apps/docs"
+          docsRepositoryBase="https://github.com/Pyxis-CX/generic-flexible-table/tree/main/apps/docs"
         >
           {children}
         </Layout>
