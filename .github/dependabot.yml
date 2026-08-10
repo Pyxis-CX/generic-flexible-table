@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-menores:
+        update-types: [minor, patch]
+    ignore:
+      # next > 16.0.7 rompe nextra 4.6 (validación zod de children).
+      # Subir SOLO junto a una versión de nextra que lo soporte.
+      - dependency-name: next
+      # zod está fijado a 4.1.13 vía pnpm override por la misma razón.
+      - dependency-name: zod
+      # tsdown pre-1.0: la config de CSS es experimental; subir a mano con test.
+      - dependency-name: tsdown
+        update-types: ['version-update:semver-minor']
