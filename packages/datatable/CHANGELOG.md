@@ -1,5 +1,14 @@
 # @pyxis-cx/generic-flexible-table
 
+## 0.2.0
+
+### Minor Changes
+
+- f63e4b4: Nuevo flag `enableColumnFilters` (default `true`): apagado, la fila de filtros
+  por columna desaparece Y las reglas existentes dejan de aplicarse (pipeline,
+  query del server y export incluidos). El control por columna sigue igual:
+  `filter` omitido o `kind: 'none'`.
+
 ## 0.1.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@pyxis-cx/generic-flexible-table",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tabla React 100 % configurable: multi-orden numerado, filtros por columna, columnas fijadas y redimensionables, virtualización, export CSV/PDF y theming por design tokens. ESM, compatible con Next.js App Router.",
   "license": "MIT",
   "type": "module",
