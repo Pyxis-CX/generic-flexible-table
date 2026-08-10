@@ -11,7 +11,7 @@ import {
 } from './constants'
 import type { ColumnDef, PinSide } from './types'
 
-export type SlotKind = 'select' | 'expander' | 'data' | 'actions' | 'filler'
+export type SlotKind = 'select' | 'expander' | 'data' | 'actions' | 'filler' | 'hspacer'
 
 /**
  * Los anchos NO viven aquí: cada columna es `var(--dt-w-<id>)`. Así el layout
@@ -113,6 +113,61 @@ export function buildLayout<T>(input: BuildLayoutInput<T>): LayoutCol<T>[] {
 
 /** `min-width` de la tabla: suma de todos los anchos, también en CSS. */
 export function tableMinWidthExpr<T>(layout: LayoutCol<T>[]): string {
-  const parts = layout.filter((c) => c.widthExpr).map((c) => c.widthExpr!)
+  const parts = layout.filter((c) => c.widthExpr && c.kind !== 'hspacer').map((c) => c.widthExpr!)
   return parts.length ? `calc(${parts.join(' + ')})` : 'auto'
+}
+
+export interface ColumnWindow {
+  /** Rango [start, end) sobre las columnas CENTRALES (no fijadas). */
+  start: number
+  end: number
+  padStartPx: number
+  padEndPx: number
+}
+
+/**
+ * Ventana horizontal: conserva las columnas fijadas y los slots, recorta las
+ * centrales al rango visible y rellena con dos spacers de ancho fijo para que
+ * el scroll y los offsets sticky no se muevan. Las claves de columna se
+ * mantienen → React reusa las celdas al desplazar la ventana.
+ */
+export function windowLayout<T>(layout: LayoutCol<T>[], window: ColumnWindow): LayoutCol<T>[] {
+  const spacer = (key: string, px: number): LayoutCol<T> => ({
+    key,
+    kind: 'hspacer',
+    column: null,
+    widthExpr: `${px}px`,
+    pin: null,
+    isPinEdge: false,
+    stickyStyle: {},
+  })
+
+  const out: LayoutCol<T>[] = []
+  let centerIndex = 0
+  let spacersPushed = false
+  for (const item of layout) {
+    const isCenter = item.pin === null && (item.kind === 'data' || item.kind === 'filler')
+    if (!isCenter) {
+      out.push(item)
+      continue
+    }
+    if (item.kind === 'filler') {
+      out.push(item)
+      continue
+    }
+    if (!spacersPushed && window.padStartPx > 0) {
+      out.push(spacer('__hspL__', window.padStartPx))
+      spacersPushed = true
+    }
+    if (centerIndex >= window.start && centerIndex < window.end) out.push(item)
+    centerIndex++
+  }
+  if (window.padEndPx > 0) {
+    // insertar antes del filler/pinned-right para no romper el orden visual
+    const fillerAt = out.findIndex((c) => c.kind === 'filler' || c.pin === 'right')
+    const sp = spacer('__hspR__', window.padEndPx)
+    if (fillerAt >= 0) out.splice(fillerAt, 0, sp)
+    else out.push(sp)
+  }
+  return out
 }

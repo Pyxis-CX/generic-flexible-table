@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createClientDataSource,
+  createCursorDataSource,
   createServerDataSource,
   fetchAllPaginated,
   queryToSearchParams,
@@ -104,6 +105,56 @@ describe('fetchAllPaginated — jamás traer todo de golpe', () => {
     const rows = await fetchAllPaginated(small, query(), { chunkSize: 500 })
     expect(rows).toHaveLength(137)
     expect(calls).toHaveLength(1)
+  })
+})
+
+describe('createCursorDataSource', () => {
+  const TOTAL = 45 // 5 páginas de 10 menos la última corta
+  const makeBackend = (log: (string | null)[]) => async (q: {
+    cursor: string | null
+    pageSize: number
+  }) => {
+    log.push(q.cursor)
+    const start = q.cursor ? Number(q.cursor) : 0
+    const rows = Array.from(
+      { length: Math.max(0, Math.min(q.pageSize, TOTAL - start)) },
+      (_, i) => ({ n: start + i, group: '' }),
+    )
+    const nextStart = start + rows.length
+    return { rows, nextCursor: nextStart < TOTAL ? String(nextStart) : null }
+  }
+
+  it('página 1 con cursor null; siguiente reutiliza el cursor cacheado', async () => {
+    const log: (string | null)[] = []
+    const source = createCursorDataSource({ fetch: makeBackend(log) })
+    const p1 = await source.fetch(query({ pageSize: 10 }))
+    expect((p1 as { rows: { n: number }[] }).rows.map((r) => r.n)).toEqual([0,1,2,3,4,5,6,7,8,9])
+    const p2 = await source.fetch(query({ page: 2, pageSize: 10 }))
+    expect((p2 as { rows: { n: number }[] }).rows[0].n).toBe(10)
+    expect(log).toEqual([null, '10']) // un fetch por página, sin repetir la 1
+  })
+
+  it('salto a página lejana encadena los fetches intermedios', async () => {
+    const log: (string | null)[] = []
+    const source = createCursorDataSource({ fetch: makeBackend(log) })
+    await source.fetch(query({ page: 4, pageSize: 10 }))
+    expect(log).toEqual([null, '10', '20', '30'])
+  })
+
+  it('total estimado: crece mientras haya cursor y se fija al agotarse', async () => {
+    const source = createCursorDataSource({ fetch: makeBackend([]) })
+    const p1 = (await source.fetch(query({ pageSize: 10 }))) as { total: number }
+    expect(p1.total).toBe(20) // visto 10 + al menos otra página
+    const p5 = (await source.fetch(query({ page: 5, pageSize: 10 }))) as { total: number }
+    expect(p5.total).toBe(45) // fin alcanzado: total exacto
+  })
+
+  it('cambiar el orden invalida la caché de cursores', async () => {
+    const log: (string | null)[] = []
+    const source = createCursorDataSource({ fetch: makeBackend(log) })
+    await source.fetch(query({ page: 2, pageSize: 10 }))
+    await source.fetch(query({ page: 2, pageSize: 10, sorts: [{ id: 'n', dir: 'desc' }] }))
+    expect(log).toEqual([null, '10', null, '10']) // re-encadena desde el principio
   })
 })
 

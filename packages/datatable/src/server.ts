@@ -3,12 +3,19 @@
 
 export {
   createClientDataSource,
+  createCursorDataSource,
   createServerDataSource,
   fetchAllPaginated,
   queryToSearchParams,
   serializeSorts,
 } from './dataSources'
-export type { FetchAllOptions, ServerDataSourceOptions } from './dataSources'
+export type {
+  CursorDataSourceOptions,
+  CursorPage,
+  CursorQuery,
+  FetchAllOptions,
+  ServerDataSourceOptions,
+} from './dataSources'
 
 /* Motor puro: útil para implementar el adapter en el backend (BFF en Node). */
 export {

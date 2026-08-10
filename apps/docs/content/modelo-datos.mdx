@@ -96,6 +96,30 @@ const all = await fetchAllPaginated(source, { sorts, filters, globalSearch }, {
 })
 ```
 
+## Paginación por cursor
+
+Backends keyset (Mongo, DynamoDB, APIs "give me the next page token") no
+saben de offsets. `createCursorDataSource` adapta ese mundo al contrato de
+la tabla:
+
+```ts
+import { createCursorDataSource } from '@pyxis-cx/generic-flexible-table/server'
+
+const source = createCursorDataSource<Order, string>({
+  fetch: async ({ cursor, pageSize, sorts, filters }, signal) => {
+    const res = await fetch(`/api/orders?after=${cursor ?? ''}&limit=${pageSize}`, { signal })
+    const data = await res.json()
+    return { rows: data.items, nextCursor: data.nextToken ?? null, total: data.total }
+  },
+})
+```
+
+Cachea el cursor de arranque de cada página visitada (avanzar y volver no
+repite fetches); saltar a una página lejana encadena los fetches intermedios,
+como el backend obliga. Si no devuelves `total`, se estima: crece mientras
+haya cursor y se fija al llegar al final. Cambiar orden/filtros/búsqueda
+invalida la caché.
+
 ## Identidades estables
 
 `dataSource` y `rows` deben ser estables (`useMemo`). Para forzar un refetch

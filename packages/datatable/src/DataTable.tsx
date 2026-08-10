@@ -18,11 +18,11 @@ import { ConfigContext, DataContext } from './context'
 import type { TableConfig, TableData, TableFlags } from './context'
 import { fetchAllPaginated } from './dataSources'
 import { exportToCsv, exportToPdf } from './exporters'
-import { useDataSource, useDebouncedValue, useVirtualRows } from './hooks'
+import { useDataSource, useDebouncedValue, useVirtualColumns, useVirtualRows } from './hooks'
 import { localStorageAdapter } from './persistence'
 import { IconAlert, IconInbox, IconRotate } from './icons'
 import { useGridKeyboardNav } from './gridNav'
-import { buildLayout, tableMinWidthExpr, widthVarOf } from './layout'
+import { buildLayout, tableMinWidthExpr, widthVarOf, windowLayout } from './layout'
 import { BodyRow } from './parts/BodyRow'
 import { Footer } from './parts/Footer'
 import { HeaderCell } from './parts/HeaderCell'
@@ -89,6 +89,8 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
 
     virtualizationThreshold = 80,
     overscan = 8,
+    enableColumnVirtualization = false,
+    columnOverscan = 3,
     pageSizeOptions = [10, 25, 50, 100],
 
     selectedRowIds,
@@ -443,6 +445,27 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
   )
 
   const minWidth = useMemo(() => tableMinWidthExpr(layout), [layout])
+
+  // Ventana horizontal de columnas centrales (las fijadas siempre se pintan).
+  const widthOf = useCallback(
+    (id: string) => committed.widths[id] ?? columnById.get(id)?.width ?? DEFAULT_WIDTH,
+    [committed.widths, columnById],
+  )
+  const centerWidths = useMemo(
+    () =>
+      layout
+        .filter((l) => l.kind === 'data' && l.pin === null)
+        .map((l) => widthOf(l.column!.id)),
+    [layout, widthOf],
+  )
+  const pinnedWidthPx = useMemo(
+    () =>
+      layout.reduce((sum, l) => {
+        if (l.pin === null || !l.widthExpr) return sum
+        return sum + (l.kind === 'data' ? widthOf(l.column!.id) : parseFloat(l.widthExpr))
+      }, 0),
+    [layout, widthOf],
+  )
   const hasFilterRow = visibleColumns.some((c) => c.filter && c.filter.kind !== 'none')
 
   // Anchos → CSS vars en el raíz. El resize en vivo escribe estas mismas
@@ -470,6 +493,22 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
   }, [committed.density, theme, pageRows.length, rowHeight])
 
   useGridKeyboardNav(scrollerRef)
+
+  const columnWindow = useVirtualColumns({
+    enabled: enableColumnVirtualization,
+    widths: centerWidths,
+    pinnedWidthPx,
+    overscan: columnOverscan,
+    scrollRef: scrollerRef,
+  })
+
+  const viewLayout = useMemo(
+    () =>
+      enableColumnVirtualization && columnWindow.end !== Infinity
+        ? windowLayout(layout, columnWindow)
+        : layout,
+    [enableColumnVirtualization, layout, columnWindow],
+  )
 
   const virtualEnabled =
     enableVirtualization && expandedCount === 0 && pageRows.length >= virtualizationThreshold
@@ -638,7 +677,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                   aria-colcount={layout.filter((l) => l.kind !== 'filler').length}
                 >
                   <colgroup>
-                    {layout.map((item) => (
+                    {viewLayout.map((item) => (
                       <col
                         key={item.key}
                         style={item.widthExpr ? { width: item.widthExpr } : undefined}
@@ -648,7 +687,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
 
                   <thead className={cx(s.thead, !stickyHeader && s.theadStatic, classNames?.thead)}>
                     <tr className={cx(s.headerRow, classNames?.headerRow)}>
-                      {layout.map((item) =>
+                      {viewLayout.map((item) =>
                         item.kind === 'data' ? (
                           <HeaderCell<T> key={item.key} item={item} />
                         ) : (
@@ -658,7 +697,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                     </tr>
                     {hasFilterRow && (
                       <tr className={cx(s.filterRow, classNames?.filterRow)}>
-                        {layout.map((item) => (
+                        {viewLayout.map((item) => (
                           <FilterCell<T> key={item.key} item={item} />
                         ))}
                       </tr>
@@ -731,7 +770,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                           row={row}
                           rowId={pageRowIds[absoluteIndex]}
                           absoluteIndex={absoluteIndex}
-                          layout={layout}
+                          layout={viewLayout}
                         />
                       )
                     })}

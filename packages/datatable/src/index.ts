@@ -31,6 +31,8 @@ export { buildTableState } from './state'
 
 export { DEFAULT_LABELS } from './utils'
 export { localStorageAdapter } from './persistence'
+export { createWorkerDataSource } from './workerSource'
+export type { WorkerDataSource } from './workerSource'
 export type { PersistenceAdapter, PersistedTableState } from './persistence'
 
 export type {

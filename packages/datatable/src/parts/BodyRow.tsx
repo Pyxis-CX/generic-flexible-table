@@ -98,6 +98,8 @@ function BodyRowInner<T>({ row, rowId, absoluteIndex, layout }: BodyRowProps<T>)
         )
       case 'filler':
         return <td key={item.key} aria-hidden />
+      case 'hspacer':
+        return <td key={item.key} aria-hidden style={{ padding: 0, border: 0 }} />
       default: {
         const column = item.column!
         const value = getCellValue(row, column)

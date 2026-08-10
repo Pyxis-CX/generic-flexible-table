@@ -326,6 +326,9 @@ export interface DataTableProps<T> {
 
   virtualizationThreshold?: number
   overscan?: number
+  /** Ventana horizontal: renderiza solo las columnas visibles (+overscan). */
+  enableColumnVirtualization?: boolean
+  columnOverscan?: number
   pageSizeOptions?: number[]
 
   /* selección */

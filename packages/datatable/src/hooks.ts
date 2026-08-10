@@ -99,6 +99,91 @@ export function useVirtualRows(params: {
 }
 
 /* ------------------------------------------------------------------ */
+/* Virtualización de columnas (ventana horizontal)                     */
+/* ------------------------------------------------------------------ */
+
+export interface ColumnWindowState {
+  start: number
+  end: number
+  padStartPx: number
+  padEndPx: number
+}
+
+const FULL_WINDOW: ColumnWindowState = { start: 0, end: Infinity, padStartPx: 0, padEndPx: 0 }
+
+export function useVirtualColumns(params: {
+  enabled: boolean
+  /** Anchos px de las columnas centrales (no fijadas), en orden visual. */
+  widths: number[]
+  /** Ancho ocupado por columnas fijadas y slots: se resta del viewport. */
+  pinnedWidthPx: number
+  overscan: number
+  scrollRef: RefObject<HTMLElement | null>
+}): ColumnWindowState {
+  const { enabled, widths, pinnedWidthPx, overscan, scrollRef } = params
+  const [window_, setWindow] = useState<ColumnWindowState>(FULL_WINDOW)
+
+  const compute = useCallback(() => {
+    const el = scrollRef.current
+    if (!enabled || !el || widths.length === 0) {
+      setWindow((prev) => (prev === FULL_WINDOW ? prev : FULL_WINDOW))
+      return
+    }
+    // RTL: scrollLeft es negativo en Chrome/Firefox → distancia absoluta.
+    const scrolled = Math.abs(el.scrollLeft)
+    const viewport = Math.max(0, el.clientWidth - pinnedWidthPx)
+
+    let acc = 0
+    let start = 0
+    while (start < widths.length && acc + widths[start] < scrolled) acc += widths[start++]
+    let end = start
+    let visible = acc
+    while (end < widths.length && visible < scrolled + viewport) visible += widths[end++]
+
+    start = Math.max(0, start - overscan)
+    end = Math.min(widths.length, end + overscan)
+
+    let padStartPx = 0
+    for (let i = 0; i < start; i++) padStartPx += widths[i]
+    let padEndPx = 0
+    for (let i = end; i < widths.length; i++) padEndPx += widths[i]
+
+    setWindow((prev) =>
+      prev.start === start && prev.end === end && prev.padStartPx === padStartPx
+        ? prev
+        : { start, end, padStartPx, padEndPx },
+    )
+  }, [enabled, widths, pinnedWidthPx, overscan, scrollRef])
+
+  useLayoutEffect(() => {
+    compute()
+  }, [compute])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!enabled || !el) return
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        compute()
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    const ro = new ResizeObserver(onScroll)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      ro.disconnect()
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [enabled, compute, scrollRef])
+
+  return window_
+}
+
+/* ------------------------------------------------------------------ */
 /* Data source                                                         */
 /* ------------------------------------------------------------------ */
 

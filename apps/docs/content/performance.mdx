@@ -76,6 +76,42 @@ const renderRowActions = useCallback((row: Row) => <Actions row={row} />, [])
 La virtualización mide la altura real de la primera fila del DOM — sobrevive a
 cambios de densidad y de tipografía.
 
+## Pipeline en Web Worker (>100k filas client)
+
+A 200 000 filas el sort en memoria cuesta ~200 ms de main thread. Con
+`createWorkerDataSource` el motor completo (filtro, orden multi, búsqueda
+normalizada, paginación) corre en un Web Worker:
+
+```tsx
+import { createWorkerDataSource } from '@pyxis-cx/generic-flexible-table'
+
+const source = useMemo(() => createWorkerDataSource(rows, columns), [rows])
+useEffect(() => () => source.terminate(), [source])
+
+<DataTable dataSource={source} … />
+```
+
+Las filas viajan al worker **una vez**; cada interacción solo mueve el
+`QueryState` y recibe la página — el structured clone por tecleo es de bytes,
+no de megas. Es un Blob autocontenido: cero configuración de bundler.
+
+Restricciones: columnas con `accessorKey` y operadores integrados
+(`accessorFn`/`sortFn`/`filterFn` no cruzan al worker — para eso usa el
+pipeline síncrono).
+
+## Virtualización de columnas
+
+Para tablas ANCHAS (decenas de columnas), `enableColumnVirtualization`
+renderiza solo las columnas visibles en el viewport (+`columnOverscan`),
+con las fijadas siempre presentes y el ancho de scroll intacto:
+
+```tsx
+<DataTable enableColumnVirtualization columnOverscan={3} … />
+```
+
+Compón con la virtualización de filas: una cuadrícula de 100 columnas ×
+100 000 filas pinta solo la ventana visible en ambos ejes.
+
 ## React Compiler
 
 La biblioteca se publica **precompilada** con React Compiler (recomendación
