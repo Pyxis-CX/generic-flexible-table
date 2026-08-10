@@ -51,6 +51,7 @@ import type {
 } from './types'
 
 const EMPTY_ROWS: never[] = []
+const EMPTY_FILTERS: never[] = []
 
 /** Lotes del export "todos" en modo server: siempre paginado, nunca un fetch total. */
 const EXPORT_CHUNK = 500
@@ -75,6 +76,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     enableColumnResize = true,
     enableColumnPinning = true,
     enableColumnVisibility = true,
+    enableColumnFilters = true,
     enableMultiSort = true,
     multiSortMode = 'accumulate',
     showSortSummary = true,
@@ -255,6 +257,9 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
   const isClient = !dataSource
   const debouncedSearch = useDebouncedValue(committed.globalSearch, FILTER_DEBOUNCE)
 
+  // Flag apagado = los filtros de columna no existen: ni UI ni efecto en datos.
+  const activeFilters = enableColumnFilters ? committed.filters : EMPTY_FILTERS
+
   // Capa 0 — índice de búsqueda: se construye perezosamente y UNA vez por dataset.
   const searchIndex = useMemo(
     () => (isClient && rows.length ? createSearchIndex(rows, columns) : null),
@@ -265,9 +270,9 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
   const filtered = useMemo(
     () =>
       isClient
-        ? filterRows(rows, committed.filters, debouncedSearch, columns, searchIndex ?? undefined)
+        ? filterRows(rows, activeFilters, debouncedSearch, columns, searchIndex ?? undefined)
         : EMPTY_ROWS,
-    [isClient, rows, committed.filters, debouncedSearch, columns, searchIndex],
+    [isClient, rows, activeFilters, debouncedSearch, columns, searchIndex],
   )
 
   // Capa 2 — ordenar: NO se repite al filtrar-igual ni al paginar.
@@ -282,10 +287,10 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
       page: committed.page,
       pageSize: committed.pageSize,
       sorts: committed.sorts,
-      filters: committed.filters,
+      filters: activeFilters,
       globalSearch: debouncedSearch,
     }),
-    [committed.page, committed.pageSize, committed.sorts, committed.filters, debouncedSearch],
+    [committed.page, committed.pageSize, committed.sorts, activeFilters, debouncedSearch],
   )
   const server = useDataSource(dataSource ?? null, serverQuery, String(dataSourceKey ?? ''))
 
@@ -373,7 +378,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                 dataSource,
                 {
                   sorts: deps.committed.sorts,
-                  filters: deps.committed.filters,
+                  filters: enableColumnFilters ? deps.committed.filters : [],
                   globalSearch: deps.committed.globalSearch,
                 },
                 { chunkSize: EXPORT_CHUNK, maxRows: EXPORT_MAX_ROWS },
@@ -403,7 +408,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
         setExporting(false)
       }
     },
-    [dataSource, columns, exportFileName, pdfTitle, pdfOrientation, labels.of],
+    [dataSource, columns, exportFileName, pdfTitle, pdfOrientation, labels.of, enableColumnFilters],
   )
 
   const reset = useCallback(() => {
@@ -466,7 +471,8 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
       }, 0),
     [layout, widthOf],
   )
-  const hasFilterRow = visibleColumns.some((c) => c.filter && c.filter.kind !== 'none')
+  const hasFilterRow =
+    enableColumnFilters && visibleColumns.some((c) => c.filter && c.filter.kind !== 'none')
 
   // Anchos → CSS vars en el raíz. El resize en vivo escribe estas mismas
   // variables a mano; el commit final pasa por aquí con el valor idéntico.

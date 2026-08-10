@@ -306,6 +306,8 @@ export interface DataTableProps<T> {
   enableColumnResize?: boolean
   enableColumnPinning?: boolean
   enableColumnVisibility?: boolean
+  /** Fila de filtros por columna. Apagado: se oculta Y las reglas se ignoran. */
+  enableColumnFilters?: boolean
   enableMultiSort?: boolean
   /**
    * `accumulate` (por defecto): un clic añade la columna al orden múltiple y
