@@ -101,3 +101,29 @@ export function UsersTable() {
 ```
 
 El flujo completo del adapter está en [Modelo de datos](/modelo-datos).
+
+## FAQ: "deprecated subdependencies" al instalar
+
+La biblioteca publica **cero dependencias** (solo peers: react, react-dom y
+jspdf opcional) — no puede introducir subdependencias deprecadas. Si pnpm
+avisa de `glob@7`, `inflight`, `rimraf@3`, `tsconfck@3`…, vienen de OTRA
+dependencia de tu proyecto. Para localizarla:
+
+```bash
+pnpm why glob inflight rimraf tsconfck
+```
+
+Pistas típicas: `tsconfck@3` → `vite-tsconfig-paths` viejo o Vite ≤6;
+`rimraf@3`/`glob@7`/`inflight` → toolchain antigua (ESLint viejo, Jest…).
+Arreglo real: actualizar al responsable. Para silenciar el aviso mientras
+tanto (pnpm ≥10), en tu package.json:
+
+```jsonc
+{
+  "pnpm": {
+    "allowedDeprecatedVersions": {
+      "glob": "7", "inflight": "1", "rimraf": "3", "tsconfck": "3"
+    }
+  }
+}
+```
