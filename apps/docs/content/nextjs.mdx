@@ -236,6 +236,140 @@ export function TablaMasiva({ rows }: { rows: Registro[] }) {
 Blob worker autocontenido: cero config de webpack/Turbopack. Restricción:
 columnas con `accessorKey` y operadores integrados.
 
+
+## Server Actions
+
+`QueryState` es serializable → una Server Action **es** el fetch del adapter,
+sin route handler ni parseo de params. Y la misma función sirve en el RSC para
+SSR de la primera página (llamada directa, sin round-trip).
+
+```
+app/empleados/
+├── page.tsx        # RSC: await fetchEmpleados({...}) → SSR primera página
+├── actions.ts      # 'use server' — la action tipada (allowlist + auth)
+├── columns.tsx     # ColumnDef[] a nivel módulo
+└── tabla.tsx       # 'use client' — DataTable + createServerDataSource
+```
+
+```ts
+// actions.ts
+'use server'
+import type { QueryResult, QueryState } from '@pyxis-cx/generic-flexible-table/server'
+
+const ORDENABLES = new Set(['nombre', 'departamento', 'salario'])
+
+export async function fetchEmpleados(query: QueryState): Promise<QueryResult<Empleado>> {
+  const orderBy = query.sorts
+    .filter((s) => ORDENABLES.has(s.id))     // allowlist SIEMPRE
+    .map((s) => ({ [s.id]: s.dir }))         // orden posicional = prioridad
+  // …where a partir de query.filters/globalSearch…
+  const [rows, total] = await Promise.all([/* findMany */, /* count */])
+  return { rows, total }
+}
+```
+
+```tsx
+// tabla.tsx
+'use client'
+const source = useMemo(
+  () => createServerDataSource<Empleado>({ fetch: (query) => fetchEmpleados(query) }),
+  [],
+)
+<DataTable dataSource={source} columns={columns} getRowId={(r) => r.id} />
+```
+
+**Action vs route handler**: la action gana en código y auth (`cookies()`
+directo), pero Next **serializa** las actions del mismo cliente (tecleo rápido
+= cola) y el `AbortSignal` no viaja (la tabla descarta respuestas obsoletas,
+el servidor las computa igual). Dashboards internos → action; alto tráfico o
+filtros muy interactivos → route handler. Migrar = cambiar solo la función
+`fetch`.
+
+## Tu propio componente sobre la tabla
+
+Patrón recomendado para apps y design systems: UN wrapper que fija los
+defaults de tu organización (tema, labels, flags, persistencia) y **conserva
+los genéricos** — el resto de la app nunca importa la biblioteca directamente.
+
+```tsx
+// components/app-table.tsx
+'use client'
+
+import { DataTable } from '@pyxis-cx/generic-flexible-table'
+import type {
+  DataTableProps,
+  PersistenceAdapter,
+  ThemeTokens,
+} from '@pyxis-cx/generic-flexible-table'
+
+const TEMA: ThemeTokens = { colorAccent: '#0e7490', radius: '10px' }
+
+const DEFAULTS = {
+  stripedRows: true,
+  enableDensityToggle: false,
+  pageSizeOptions: [25, 50, 100],
+  persistVersion: 2,               // súbelo al cambiar esquemas de columnas
+} satisfies Partial<DataTableProps<unknown>>
+
+// vistas por usuario contra tu API en vez de localStorage
+const persistencia: PersistenceAdapter = {
+  read: async (key, v) => (await fetch(`/api/vistas/${key}?v=${v}`)).json(),
+  write: (key, v, s) =>
+    void fetch(`/api/vistas/${key}?v=${v}`, { method: 'PUT', body: JSON.stringify(s) }),
+  clear: (key) => void fetch(`/api/vistas/${key}`, { method: 'DELETE' }),
+}
+
+/** La tabla de la casa: mismos props que DataTable, con los defaults puestos. */
+export function AppTable<T>(props: DataTableProps<T>) {
+  return <DataTable<T> {...DEFAULTS} theme={TEMA} persistence={persistencia} {...props} />
+}
+```
+
+Uso en cualquier página — los props explícitos ganan a los defaults:
+
+```tsx
+<AppTable<Empleado>
+  tableId="empleados"
+  columns={columns}
+  dataSource={source}
+  getRowId={(r) => r.id}
+  enableDensityToggle   // override puntual del default
+/>
+```
+
+Un nivel más: componente de dominio que también fija columnas y datos —
+la página queda en una línea:
+
+```tsx
+// app/empleados/tabla-empleados.tsx
+'use client'
+import { useMemo } from 'react'
+import { createServerDataSource } from '@pyxis-cx/generic-flexible-table/server'
+import { AppTable } from '@/components/app-table'
+import { fetchEmpleados } from './actions'
+import { columns } from './columns'
+
+export function TablaEmpleados() {
+  const source = useMemo(
+    () => createServerDataSource<Empleado>({ fetch: (q) => fetchEmpleados(q) }),
+    [],
+  )
+  return <AppTable<Empleado> tableId="empleados" columns={columns}
+    dataSource={source} getRowId={(r) => r.id} />
+}
+```
+
+Reglas del wrapper:
+
+1. Constantes (`TEMA`, `DEFAULTS`, `persistencia`) **a nivel módulo** —
+   identidad estable, las filas no se re-renderizan por el wrapper.
+2. `satisfies Partial<DataTableProps<unknown>>` valida los defaults sin
+   perder inferencia.
+3. Spread del consumidor SIEMPRE al final: cualquier página puede desactivar
+   un default.
+4. Si además necesitas leer estado desde dentro (toolbar propia), combina con
+   los hooks de [Composición](/composicion) — el wrapper no te encierra.
+
 ## Dark mode
 
 Automático con `prefers-color-scheme`. Forzado (p.ej. con next-themes):
