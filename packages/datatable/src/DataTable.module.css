@@ -488,13 +488,14 @@
   .headerRow {
     & th {
       top: 0;
-      height: var(--dt-header-height);
+      height: var(--dt-header-height); /* en <th> actúa como mínimo: crece al envolver */
     }
   }
 
   .filterRow {
     & th {
-      top: var(--dt-header-height);
+      /* la cabecera puede crecer si los títulos envuelven: offset medido */
+      top: var(--dt-measured-header-h, var(--dt-header-height));
       height: var(--dt-filter-row-height);
       background: var(--dt-color-surface-alt);
     }
@@ -560,25 +561,31 @@
     background: none;
     border: 0;
 
+    /* Por defecto el título ENVUELVE: nada de elipsis silenciosa. */
     & .title {
-      overflow: hidden;
       font-size: var(--dt-header-font-size);
       font-weight: var(--dt-header-font-weight);
       letter-spacing: var(--dt-header-letter-spacing);
-      text-overflow: ellipsis;
       text-transform: uppercase;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
     }
 
     & .subtitle {
-      overflow: hidden;
       font-size: 11px;
       font-weight: 400;
       color: var(--dt-color-text-muted);
-      text-overflow: ellipsis;
       text-transform: none;
       letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Opt-in (truncateHeader / truncateHeaders): elipsis + tooltip nativo. */
+    &[data-truncate='true'] .title,
+    &[data-truncate='true'] .subtitle {
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
+      overflow-wrap: normal;
     }
 
     &[data-sortable="true"] {

@@ -92,6 +92,13 @@ export interface ColumnDef<T> {
   subHeader?: ReactNode
   headerTooltip?: string
 
+  /**
+   * Trunca el título con elipsis en vez de envolverlo (default: envolver).
+   * Truncado, la celda muestra tooltip nativo con el texto completo
+   * (salvo que ya definas `headerTooltip`).
+   */
+  truncateHeader?: boolean
+
   accessorKey?: Extract<keyof T, string>
   accessorFn?: (row: T) => unknown
 
@@ -308,6 +315,8 @@ export interface DataTableProps<T> {
   enableColumnVisibility?: boolean
   /** Fila de filtros por columna. Apagado: se oculta Y las reglas se ignoran. */
   enableColumnFilters?: boolean
+  /** Truncar TODOS los títulos con elipsis + tooltip (por columna: `truncateHeader`). */
+  truncateHeaders?: boolean
   enableMultiSort?: boolean
   /**
    * `accumulate` (por defecto): un clic añade la columna al orden múltiple y

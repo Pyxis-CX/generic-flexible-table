@@ -39,6 +39,7 @@ export interface TableFlags {
   enablePagination: boolean
   stickyHeader: boolean
   stripedRows: boolean
+  truncateHeaders: boolean
 }
 
 export interface TableConfig<T> {

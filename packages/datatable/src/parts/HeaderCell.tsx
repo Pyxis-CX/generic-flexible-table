@@ -36,6 +36,12 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
     state.ui.dropTarget?.id === column.id ? state.ui.dropTarget.side : null,
   )
 
+  // Por defecto los títulos ENVUELVEN; truncar es opt-in (global o por columna)
+  // y entonces el th ofrece tooltip nativo con el texto completo.
+  const truncate = column.truncateHeader ?? flags.truncateHeaders
+  const plainHeader =
+    typeof column.header === 'string' ? column.header : (column.exportHeader ?? column.id)
+
   const canSort = column.sortable !== false
   const canResize = flags.enableColumnResize && column.resizable !== false
   const canReorder = flags.enableColumnReorder && column.reorderable !== false
@@ -191,7 +197,7 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
       onDragEnd={() => dispatch({ type: 'drag/end' })}
       onKeyDown={onKeyDown}
       tabIndex={canReorder ? 0 : undefined}
-      title={column.headerTooltip}
+      title={column.headerTooltip ?? (truncate ? plainHeader : undefined)}
     >
       <div className={s.headerInner} data-align={align}>
         {column.renderHeader ? (
@@ -200,6 +206,7 @@ function HeaderCellInner<T>({ item }: HeaderCellProps<T>) {
           <button
             type="button"
             className={s.headerLabel}
+            data-truncate={truncate || undefined}
             data-sortable={canSort}
             onClick={handleLabelClick}
             disabled={!canSort}

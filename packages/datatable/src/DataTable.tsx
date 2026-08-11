@@ -88,6 +88,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
     enablePagination = true,
     stripedRows = false,
     stickyHeader = true,
+    truncateHeaders = false,
 
     virtualizationThreshold = 80,
     overscan = 8,
@@ -500,6 +501,21 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
 
   useGridKeyboardNav(scrollerRef)
 
+  // Los títulos envueltos pueden hacer crecer la cabecera: la fila de filtros
+  // sticky usa esta medida como offset (--dt-measured-header-h). Escritura DOM
+  // directa: cero renders.
+  const headerRowRef = useRef<HTMLTableRowElement>(null)
+  useEffect(() => {
+    const row = headerRowRef.current
+    const root = rootRef.current
+    if (!row || !root) return
+    const apply = () => root.style.setProperty('--dt-measured-header-h', `${row.getBoundingClientRect().height}px`)
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(row)
+    return () => observer.disconnect()
+  }, [])
+
   const columnWindow = useVirtualColumns({
     enabled: enableColumnVirtualization,
     widths: centerWidths,
@@ -547,6 +563,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
       enablePagination,
       stickyHeader,
       stripedRows,
+      truncateHeaders,
     }),
     [
       enableColumnReorder,
@@ -561,6 +578,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
       enablePagination,
       stickyHeader,
       stripedRows,
+      truncateHeaders,
     ],
   )
 
@@ -692,7 +710,7 @@ export function DataTable<T>(props: DataTableProps<T>): ReactNode {
                   </colgroup>
 
                   <thead className={cx(s.thead, !stickyHeader && s.theadStatic, classNames?.thead)}>
-                    <tr className={cx(s.headerRow, classNames?.headerRow)}>
+                    <tr ref={headerRowRef} className={cx(s.headerRow, classNames?.headerRow)}>
                       {viewLayout.map((item) =>
                         item.kind === 'data' ? (
                           <HeaderCell<T> key={item.key} item={item} />

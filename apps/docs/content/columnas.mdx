@@ -44,6 +44,27 @@ const columns: ColumnDef<Employee>[] = [
 ]
 ```
 
+## Títulos largos: envolver (default) o truncar
+
+Por defecto los títulos **envuelven** — nunca hay elipsis silenciosa que
+esconda información; la cabecera crece lo necesario (la fila de filtros sticky
+sigue la altura real medida).
+
+Si prefieres cabeceras compactas, el truncado es **opt-in** y entonces la
+celda muestra un **tooltip nativo** con el texto completo:
+
+```tsx
+// global: todas las columnas
+<DataTable truncateHeaders … />
+
+// o por columna (gana al global)
+{ id: 'presupuesto', header: 'Presupuesto consolidado interanual', truncateHeader: true }
+```
+
+Reglas del tooltip: solo aparece cuando la columna está truncada; si defines
+`headerTooltip`, el tuyo gana siempre. Para estilizar el estado hay un
+`data-truncate="true"` en el label del título.
+
 ## Interacciones de columna
 
 | Interacción | Cómo |
