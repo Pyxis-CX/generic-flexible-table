@@ -19,7 +19,7 @@
     "changeset": "changeset"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.0",
+    "@changesets/cli": "^3.0.0",
     "oxlint": "^1.75.0"
   },
   "pnpm": {
